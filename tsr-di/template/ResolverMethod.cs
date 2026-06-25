@@ -30,10 +30,12 @@ else {{
 }}
 }}
 
-[MethodImpl(MethodImplOptions.AggressiveInlining)]
-[System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
+[MethodImpl(MethodImplOptions.AggressiveInlining)] [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
 public static T Resolve<T>(ServiceKey  key= ServiceKey.None) => InnerResolver<T>.Resolve(new FieldStore(), key);
-[MethodImpl(MethodImplOptions.AggressiveInlining)]
-[System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
+
+[MethodImpl(MethodImplOptions.AggressiveInlining)] [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
 public static IEnumerable<T> ResolveAll<T>() => InnerResolver<T>.ResolveAll(new FieldStore());
+
+{3}
+
 }}

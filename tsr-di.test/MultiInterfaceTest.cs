@@ -71,5 +71,28 @@ public sealed class MultiInterfaceTest
         Assert.AreSame(a1s, a2s);
         Assert.AreNotSame(a1i, a2i);
     }
+
+    [TestMethod]
+    public void ResolveAll2()
+    {
+        var (a1,a2) = ServiceResolver.ResolveAll<IMultiInterface1, IMultiInterface2>();
+
+        var a1d = a1.OfType<MultiInterfacDef>().FirstOrDefault();
+        var a1s = a1.OfType<MultiInterfaceShared>().FirstOrDefault();
+        var a1i = a1.OfType<MultiInterfaceIsolate>().FirstOrDefault();
+        var a2d = a2.OfType<MultiInterfacDef>().FirstOrDefault();
+        var a2s = a2.OfType<MultiInterfaceShared>().FirstOrDefault();
+        var a2i = a2.OfType<MultiInterfaceIsolate>().FirstOrDefault();
+
+        Assert.IsNotNull(a1d);
+        Assert.IsNotNull(a1s);
+        Assert.IsNotNull(a1i);
+        Assert.IsNotNull(a2d);
+        Assert.IsNotNull(a2s);
+        Assert.IsNotNull(a2i);
+        Assert.AreSame(a1d, a2d);
+        Assert.AreSame(a1s, a2s);
+        Assert.AreNotSame(a1i, a2i);
+    }
 }
 

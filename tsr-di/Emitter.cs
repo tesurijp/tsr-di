@@ -18,12 +18,13 @@ internal static class Emitter
     internal static void WriteAttribute(IncrementalGeneratorInitializationContext context) =>
         context.RegisterPostInitializationOutput((ctx) => ctx.AddSource("Attribute.g.cs", TemplateReader.AttributeCS));
 
-    internal static void WriteSource(SourceProductionContext context, (((ImmutableArray<(string nmspc, string clsnm)> , ImmutableArray<FieldItem>), ImmutableArray<ResolverItem>) , ImmutableArray<DelegateItem>) param)
+    internal static void WriteSource(SourceProductionContext context, ((((ImmutableArray<(string nmspc, string clsnm)> , ImmutableArray<FieldItem>), ImmutableArray<ResolverItem>) , ImmutableArray<DelegateItem>), ImmutableArray<int>) param)
     {
-        var ident = param.Item1.Item1.Item1;
-        var fieldItems = param.Item1.Item1.Item2;
-        var resolveItems = param.Item1.Item2;
-        var delegateItems = param.Item2;
+        var ident = param.Item1.Item1.Item1.Item1;
+        var fieldItems = param.Item1.Item1.Item1.Item2;
+        var resolveItems = param.Item1.Item1.Item2;
+        var delegateItems = param.Item1.Item2;
+        var count = param.Item2;
 
         if (ident.Any())
         {
@@ -33,7 +34,8 @@ internal static class Emitter
 
             var lookup = resolveItems.ToLookup(i => i.IdentName, i => i);
             var resoleveLine = MakeResolveLines(lookup);
-            var resolveCsCode = string.Format(TemplateReader.ResolveMethodCS, nmspc, clsnm, string.Join("\r\n", resoleveLine));
+            var extendResolveLine = MakeExtendResolveFunc(count);
+            var resolveCsCode = string.Format(TemplateReader.ResolveMethodCS, nmspc, clsnm, string.Join("\r\n", resoleveLine), string.Join("\r\n", extendResolveLine));
 
             var list = resolveItems.Where(i => i.Key is not null).Select(i => i.Key!).Distinct();
             var enumCS = string.Format(TemplateReader.ServiceTypeEnumCS, nmspc, clsnm, string.Join(",\r\n", list));
@@ -70,7 +72,6 @@ internal static class Emitter
             {
                 yield return $"    internal object {item.FieldName} {{get => {getterFrom} {item.InitializeString}; }}";
             }
-            yield return "";
         }
     }
     private static IEnumerable<string> MakeResolveLines(ILookup<string, ResolverItem> lookup)
@@ -97,6 +98,40 @@ internal static class Emitter
             yield return "    }";
         }
     }
+    private static IEnumerable<string> MakeExtendResolveFunc(ImmutableArray<int> counts)
+    {
+        foreach(var i in counts)
+        {
+            if(i > 1)
+            {
+                var typeArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"T{ar}"));
+                var retArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"res{ar}"));
+                var typeEnumArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"IEnumerable<T{ar}>"));
+                var keyArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"ServiceKey key{ar} = ServiceKey.None"));
+
+                yield return "[MethodImpl(MethodImplOptions.AggressiveInlining)] [System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
+                yield return $"public static ({typeArgs}) Resolve<{ typeArgs}>({keyArgs}) {{";
+                yield return "    var localStore = new FieldStore();";
+                for(var num =1; num <= i; num++)
+                {
+                    yield return $"    var res{num} = InnerResolver<T{num}>.Resolve(localStore, key{num});";
+                }
+                yield return $"    return ({retArgs});";
+                yield return "}";
+
+                yield return "[MethodImpl(MethodImplOptions.AggressiveInlining)] [System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
+                yield return $"public static ({typeEnumArgs}) ResolveAll<{ typeArgs}>() {{";
+                yield return "    var localStore = new FieldStore();";
+                for(var num =1; num <= i; num++)
+                {
+                    yield return $"    var res{num} = InnerResolver<T{num}>.ResolveAll(localStore);";
+                }
+                yield return $"    return ({retArgs});";
+                yield return "}";
+            }
+        }
+    }
+
 
     private static IEnumerable<string> MakeDelegatesLines(ImmutableArray<DelegateItem> items)
     {

@@ -232,12 +232,14 @@ internal partial class Mapper
         }
     }
 
-    internal static IEnumerable<ResultOrError<ResolverItem>> ToResolveItems_Internal(ImmutableArray<(INamedTypeSymbol? pcls,INamedTypeSymbol? cls, Location loc)> targets, TypeSymbols items, MethodSymbols mitems, INamedTypeSymbol svcResolverAttr, INamedTypeSymbol svcClsAttr, INamedTypeSymbol svcFuncAttr)
+    internal static IEnumerable<ResultOrError<ResolverItem>> ToResolveItems_Internal(ImmutableArray<(INamedTypeSymbol? pcls,ImmutableArray<INamedTypeSymbol?> typeList, Location loc)> targets, TypeSymbols items, MethodSymbols mitems, INamedTypeSymbol svcResolverAttr, INamedTypeSymbol svcClsAttr, INamedTypeSymbol svcFuncAttr)
     {
         var lookup = CreateTypeLookup(items, svcClsAttr);
         var lookupMethod = CreateFuncLookup(mitems, svcFuncAttr);
 
-        foreach (var (pcls, cls, loc) in targets)
+        var flatlist = targets.SelectMany(i => i.typeList, (i, cls) => (i.pcls, cls, i.loc));
+
+        foreach (var (pcls, cls, loc) in flatlist)
         {
             if(pcls is null || cls is null || !Collector.HasAttribute(pcls, svcResolverAttr))
             {
@@ -268,7 +270,7 @@ internal partial class Mapper
             }
         }
 
-        foreach (var resTarget in targets.Select(c => c.cls).Where(c=>c is not null).Distinct(SymbolEqualityComparer.Default))
+        foreach (var resTarget in flatlist.Select(c => c.cls).Where(c=>c is not null).Distinct(SymbolEqualityComparer.Default))
         {
             foreach (var item in ToResolveItem((resTarget as INamedTypeSymbol)!, lookup, lookupMethod))
             {

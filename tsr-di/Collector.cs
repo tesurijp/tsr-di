@@ -2,6 +2,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 namespace tsr_di;
 
@@ -26,19 +27,19 @@ internal static class Collector
         c.GetTypeByMetadataName(GenericList)!
     ));
 
-    internal static IncrementalValuesProvider<(INamedTypeSymbol?, INamedTypeSymbol?, Location)> FindResolveFunc(IncrementalGeneratorInitializationContext context) =>
+    internal static IncrementalValuesProvider<(INamedTypeSymbol?, ImmutableArray<INamedTypeSymbol?>, Location)> FindResolveFunc(IncrementalGeneratorInitializationContext context) =>
         context.SyntaxProvider.CreateSyntaxProvider(
             (node, _) => node is InvocationExpressionSyntax caller && PreCheckResolveFunction(caller),
             (context, _) =>
             {
                 var mb = ((context.Node as InvocationExpressionSyntax)!.Expression as MemberAccessExpressionSyntax)!;
-                if (mb.Name is GenericNameSyntax generic && generic.TypeArgumentList.Arguments.Count == 1)
+                if (mb.Name is GenericNameSyntax generic && generic.TypeArgumentList.Arguments.Count > 0)
                 {
                     var tp = context.SemanticModel.GetTypeInfo(mb.Expression).Type as INamedTypeSymbol;
-                    var argSyntax = generic.TypeArgumentList.Arguments[0];
-                    return (tp,  context.SemanticModel.GetTypeInfo(argSyntax).Type as INamedTypeSymbol, mb.GetLocation());
+                    var items = generic.TypeArgumentList.Arguments.Select(a => context.SemanticModel.GetTypeInfo(a).Type as INamedTypeSymbol).ToImmutableArray();
+                    return (tp,  items , mb.GetLocation());
                 }
-                return (null, null, Location.None);
+                return (null, [], Location.None);
             });
 
     internal static IncrementalValuesProvider<INamedTypeSymbol> FindServiceResolver(IncrementalGeneratorInitializationContext context) =>
