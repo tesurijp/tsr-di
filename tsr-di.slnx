@@ -1,0 +1,26 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="NugetReferTest" />
+    <BuildType Name="ProjectReferTest" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Folder Name="/ソリューション項目/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="LICENSE.txt" />
+    <File Path="ReadMe.md" />
+  </Folder>
+  <Project Path="tsr-di/tsr-di.csproj">
+    <BuildType Solution="NugetReferTest|*" Project="Release" />
+    <BuildType Solution="ProjectReferTest|*" Project="Debug" />
+  </Project>
+  <Project Path="tsr-di.Attribute/tsr-di.Attribute.csproj">
+    <BuildType Solution="NugetReferTest|*" Project="Release" />
+    <BuildType Solution="ProjectReferTest|*" Project="Debug" />
+  </Project>
+  <Project Path="tsr-di.test/tsr-di.test.csproj">
+    <BuildType Solution="Debug|*" Project="ProjectReferTest" />
+    <BuildType Solution="Release|*" Project="NugetReferTest" />
+  </Project>
+</Solution>

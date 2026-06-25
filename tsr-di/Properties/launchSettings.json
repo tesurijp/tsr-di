@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "tsr-di.test": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\tsr-di.test\\tsr-di.test.csproj"
+    }
+  }
+}

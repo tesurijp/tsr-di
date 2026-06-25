@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>library</OutputType>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<RootNamespace>tsr_di</RootNamespace>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<IsRoslynComponent>true</IsRoslynComponent>
+		<AnalyzerLanguage>cs</AnalyzerLanguage>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		<GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+		<DefineConstants>$(DefineConstants);TSR_DI_NEED_INTERNAL_ATTRIBUTE</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+        <Content Include="build\tsr-di.targets" Pack="True" PackagePath="build" />
+	</ItemGroup>
+
+	<Target Name="GetDependencyTargetPaths" AfterTargets="ResolvePackageDependenciesForBuild">
+		<ItemGroup>
+			<TargetPathWithTargetPlatformMoniker Include="@(ResolvedCompileFileDefinitions)" IncludeRuntimeDependency="false" />
+		</ItemGroup>
+	</Target>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" Version="5.*" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="template/*" />
+		<EmbeddedResource Include="template/*" /> 
+		<Compile Include="template/Attributes.cs" Link="Attributes.cs" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Update="Mapper_*.cs">
+		<DependentUpon>Mapper.cs</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+</Project>

@@ -1,0 +1,12 @@
+<Project>
+	<PropertyGroup>
+		<PrepareForBuildDependsOn>$(PrepareForBuildDependsOn);_TSR_DI_AttributeCheck</PrepareForBuildDependsOn>
+	</PropertyGroup>
+	<Target Name="_TSR_DI_AttributeCheck">
+		<PropertyGroup>
+			<_TSR_DI_AttributeReferCheck
+                Condition="@(PackageDependencies->WithMetadataValue('Identity', 'tsr-di.Attribute')->Count()) == 0">true</_TSR_DI_AttributeReferCheck>
+			<DefineConstants Condition="'$(_TSR_DI_AttributeReferCheck)' == 'true'">$(DefineConstants);TSR_DI_NEED_INTERNAL_ATTRIBUTE</DefineConstants>
+		</PropertyGroup>
+	</Target>
+</Project>
