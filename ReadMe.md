@@ -211,15 +211,35 @@ tsr-di は主に以下のファイルを生成します
 
 ### `Resolve.g.cs`
 
-`Resolve<T>` および `ResolveAll<T>` の実体が定義されます。  
-ローカル変数として `FieldStore` をインスタンス化し、 `InnerResolve<T>` によって `FieldStore`のどのプロパティを参照すべきか解決します。  
-`InnerResolve<T>`は、静的コンストラクタ内の `typeof(T)` による `if/else` 分岐で、フィールドを事前に絞り込みます。 2度目の呼び出し以降は `ServiceKey`による `switch` 分岐のみが行なわれます。  
-リフレクションなどは一切使用せず、コンパイル時に確定した条件分岐のみでコードが生成されます。  
-ローカル変数 `FieldStore` の寿命と DI としてのスコープが一致するため、スコープ管理専用のコードもありません。
+`Resolve<T>` および `ResolveAll<T>` の中身が定義されます。  
+ローカル変数として `FieldStore` をインスタンス化し、`InnerResolve`に実装された `IResolver<T>` のインターフェース型のメソッドを参照することで、`FieldStore` のどのフィールドを指定するか選択します。
+ローカル変数 `FieldStore` の寿命と DI としてのスコープが一致するため、スコープ管理専用のコードはありませんが、常に `FieldStore`のインスタンスが作成されるため、そこがネックになる可能性があります。
 
-実行時の判断を可能な限り排除することがコンセプトのためには、C++ のテンプレート特殊化のような構造にしたいところですが、C# では実現できないため、`Resolve<T>()` が呼ばれた場合に分岐が発生します。
-分岐判定の対象は、コード上で実際に `Resolve<T>()` や `ResolveAll<T>()` の型引数として使用されている型 `T` のみに限定しており、登録しても`Resolve`の型引数として 利用していないインターフェースの判定処理は出力されません。
+実装されるインターフェースは、コード上で実際に `Resolve<T>()` や `ResolveAll<T>()` の型引数として使用されている型 `T` のみに限定しており、登録しても`Resolve`の型引数として 利用していないインターフェースの判定処理は出力されません。
 このため `[ServiceClass]` や `[ServiceFunction]` 属性を付与していても実際にはコード上で解決要求のないサービスは、インターフェースへの参照が到達されることのないクラスや関数となり、Native AOT 等によるトリムの対象になりやすくなります。  
+
+`Resolve/ResolveAll` ともに、型引数数は、ソースコード上で利用されている数と対応して生成されます。
+
+```csharp
+
+public static T Resolve<T>(ServiceKey  key= ServiceKey.None) => ((IResolver<T>)inner).Resolve(new FieldStore(), key);
+
+public static (T1,T2) Resolve<T1,T2>(ServiceKey key1 = ServiceKey.None,ServiceKey key2 = ServiceKey.None) {
+    var localStore = new FieldStore();
+    var res1 = ((IResolver<T1>)inner).Resolve(localStore, key1);
+    var res2 = ((IResolver<T2>)inner).Resolve(localStore, key2);
+    return (res1,res2);
+}
+
+public static (T1,T2,T3,T4) Resolve<T1,T2,T3,T4>(ServiceKey key1 = ServiceKey.None,ServiceKey key2 = ServiceKey.None,ServiceKey key3 = ServiceKey.None,ServiceKey key4 = ServiceKey.None) {
+    var localStore = new FieldStore();
+    var res1 = ((IResolver<T1>)inner).Resolve(localStore, key1);
+    var res2 = ((IResolver<T2>)inner).Resolve(localStore, key2);
+    var res3 = ((IResolver<T3>)inner).Resolve(localStore, key3);
+    var res4 = ((IResolver<T4>)inner).Resolve(localStore, key4);
+    return (res1,res2,res3,res4);
+}
+```
 
 ### `TypedEnum.g.cs`
 

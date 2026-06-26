@@ -8,34 +8,33 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using {0}.AutoDefined;
-namespace {0};
 
+namespace {0};
 static partial class {1}
 {{
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
-private class InnerResolver<T>
+private interface IResolver<T>
 {{
-public static Func<FieldStore, ServiceKey, T> Resolve;
-public static Func<FieldStore, IEnumerable<T>> ResolveAll;
-static InnerResolver()
+    T Resolve( FieldStore store, ServiceKey key);
+    IEnumerable<T> ResolveAll(FieldStore store);
+}}
+
+[System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
+private class InnerResolver : {2}
 {{
-var tp = typeof(T);
-if (false) {{  }}
-  {2}
-else {{
-    Resolve = (_,_) => throw new UnreachableException();
-    ResolveAll = (_) => throw new UnreachableException(); 
-}}
-}}
-}}
-
-[MethodImpl(MethodImplOptions.AggressiveInlining)] [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
-public static T Resolve<T>(ServiceKey  key= ServiceKey.None) => InnerResolver<T>.Resolve(new FieldStore(), key);
-
-[MethodImpl(MethodImplOptions.AggressiveInlining)] [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
-public static IEnumerable<T> ResolveAll<T>() => InnerResolver<T>.ResolveAll(new FieldStore());
-
 {3}
+}}
+
+static readonly InnerResolver inner = new ();
+
+[System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
+public static T Resolve<T>(ServiceKey  key= ServiceKey.None) => ((IResolver<T>)inner).Resolve(new FieldStore(), key);
+
+[System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
+public static IEnumerable<T> ResolveAll<T>() => ((IResolver<T>)inner).ResolveAll(new FieldStore());
+
+{4}
 
 }}

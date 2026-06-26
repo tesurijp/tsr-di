@@ -33,9 +33,10 @@ internal static class Emitter
             var storeCsCode = string.Format(TemplateReader.StoreFieldsCS, nmspc, clsnm, string.Join("\r\n", fieldsLine));
 
             var lookup = resolveItems.ToLookup(i => i.IdentName, i => i);
-            var resoleveLine = MakeResolveLines(lookup);
+            var resoleveInterfaces = MakeResolveInterfaces(lookup);
+            var resoleveFuncs = MakeResolveFunc(lookup);
             var extendResolveLine = MakeExtendResolveFunc(count);
-            var resolveCsCode = string.Format(TemplateReader.ResolveMethodCS, nmspc, clsnm, string.Join("\r\n", resoleveLine), string.Join("\r\n", extendResolveLine));
+            var resolveCsCode = string.Format(TemplateReader.ResolveMethodCS, nmspc, clsnm, string.Join(",", resoleveInterfaces), string.Join("\r\n", resoleveFuncs), string.Join("\r\n", extendResolveLine));
 
             var list = resolveItems.Where(i => i.Key is not null).Select(i => i.Key!).Distinct();
             var enumCS = string.Format(TemplateReader.ServiceTypeEnumCS, nmspc, clsnm, string.Join(",\r\n", list));
@@ -64,38 +65,42 @@ internal static class Emitter
             };
             if (LifeTime.Singleton == item.LifeTime)
             {
-                yield return $"    private static object? _{item.FieldName};";
+                yield return $"    private static {item.TypeName}? _{item.FieldName};";
                 yield return $"    private static Lock _lock_{item.FieldName} = new();";
-                yield return $"    internal object {item.FieldName} {{get {{ lock(_lock_{item.FieldName}) {{ return {getterFrom} {item.InitializeString}; }} }} }}";
+                yield return $"    internal {item.TypeName} {item.FieldName} {{get {{ lock(_lock_{item.FieldName}) {{ return {getterFrom} {item.InitializeString}; }} }} }}";
             }
             else
             {
-                yield return $"    internal object {item.FieldName} {{get => {getterFrom} {item.InitializeString}; }}";
+                yield return $"    internal {item.TypeName} {item.FieldName} {{get => {getterFrom} {item.InitializeString}; }}";
             }
         }
     }
-    private static IEnumerable<string> MakeResolveLines(ILookup<string, ResolverItem> lookup)
+
+    private static IEnumerable<string> MakeResolveInterfaces(ILookup<string, ResolverItem> lookup) => lookup.Select(item => $"IResolver<{item.Key}>");
+
+    private static IEnumerable<string> MakeResolveFunc(ILookup<string, ResolverItem> lookup)
     {
         foreach (var item in lookup)
         {
             var itemarray = item.ToArray();
-            yield return $"    else if ( tp == typeof({item.Key})) {{";
-            yield return "        Resolve = (localStore, key) => key switch {";
+            yield return $"        {item.Key} IResolver<{item.Key}>.Resolve(FieldStore localStore, ServiceKey key) => key switch {{";
             foreach (var i in itemarray)
             {
                 var fld = $"ServiceKey.{(i.Key is null ? "None" : i.Key)}";
-                yield return $"            {fld} => (T)localStore.{i.FieldName},";
+                yield return $"            {fld} => ({item.Key})localStore.{i.FieldName},";
             }
             yield return "            _ => throw new UnreachableException()";
             yield return "        };";
+            yield return "";
 
-            yield return "        ResolveAll = (localStore) => [ ";
+            yield return $"        IEnumerable<{item.Key}> IResolver<{item.Key}>.ResolveAll(FieldStore localStore) => ";
+            yield return "        [";
             foreach (var i in itemarray)
             {
-                yield return $"            (T)(localStore.{i.FieldName}),";
+                yield return $"            ({item.Key})(localStore.{i.FieldName}),";
             }
             yield return "        ];";
-            yield return "    }";
+            yield return "";
         }
     }
     private static IEnumerable<string> MakeExtendResolveFunc(ImmutableArray<int> counts)
@@ -109,22 +114,22 @@ internal static class Emitter
                 var typeEnumArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"IEnumerable<T{ar}>"));
                 var keyArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"ServiceKey key{ar} = ServiceKey.None"));
 
-                yield return "[MethodImpl(MethodImplOptions.AggressiveInlining)] [System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
+                yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
                 yield return $"public static ({typeArgs}) Resolve<{ typeArgs}>({keyArgs}) {{";
                 yield return "    var localStore = new FieldStore();";
                 for(var num =1; num <= i; num++)
                 {
-                    yield return $"    var res{num} = InnerResolver<T{num}>.Resolve(localStore, key{num});";
+                    yield return $"    var res{num} = ((IResolver<T{num}>)inner).Resolve(localStore, key{num});";
                 }
                 yield return $"    return ({retArgs});";
                 yield return "}";
 
-                yield return "[MethodImpl(MethodImplOptions.AggressiveInlining)] [System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
+                yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
                 yield return $"public static ({typeEnumArgs}) ResolveAll<{ typeArgs}>() {{";
                 yield return "    var localStore = new FieldStore();";
                 for(var num =1; num <= i; num++)
                 {
-                    yield return $"    var res{num} = InnerResolver<T{num}>.ResolveAll(localStore);";
+                    yield return $"    var res{num} = ((IResolver<T{num}>)inner).ResolveAll(localStore);";
                 }
                 yield return $"    return ({retArgs});";
                 yield return "}";

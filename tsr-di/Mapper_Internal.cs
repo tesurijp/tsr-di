@@ -45,7 +45,7 @@ internal partial class Mapper
                 {
                     if (items.Length > 0)
                     {
-                        yield return $"[{string.Join(",", items.Select(i => $"({type}){i.FieldName}"))}]";
+                        yield return $"[{string.Join(",", items.Select(i => $"{i.FieldName}"))}]";
                     }
                     else
                     {
@@ -62,11 +62,11 @@ internal partial class Mapper
                     {
                         if (isLazy)
                         {
-                            yield return $"new (() => ({type}){matches[0].FieldName})";
+                            yield return $"new (() => {matches[0].FieldName})";
                         }
                         else
                         {
-                            yield return $"({type}){matches[0].FieldName}";
+                            yield return $"{matches[0].FieldName}";
                         }
                     }
                     else
@@ -173,13 +173,13 @@ internal partial class Mapper
             }
             else if (item.IsStatic)
             {
-                yield return new FieldItem(ToTidyName(item), LifeTime.Transient, $"({delName}){parentCls}.{item.Name}");
+                yield return new FieldItem(delName, ToTidyName(item), LifeTime.Transient, $"{parentCls}.{item.Name}");
             }
             else if (Collector.HasAttribute(parentCls, sset.SvcClassAttr))
             {
                 if (GetServiceClassAttribute(sset.SvcClassAttr, parentCls) is { shared: SharingMode.Shared })
                 {
-                    yield return new FieldItem(ToTidyName(item), LifeTime.Transient, $"({delName})(({parentCls}){ToTidyName(parentCls)}).{item.Name}");
+                    yield return new FieldItem(delName, ToTidyName(item), LifeTime.Transient, $"{ToTidyName(parentCls)}.{item.Name}");
                 }
                 else
                 {
@@ -222,12 +222,12 @@ internal partial class Mapper
             {
                 foreach (var intf in item.AllInterfaces)
                 {
-                    yield return new FieldItem($"{ToTidyName(intf)}_{ToTidyName(item)}", lifetime, $"new {item}({string.Join(", ", args)})");
+                    yield return new FieldItem(intf.ToString(), $"{ToTidyName(intf)}_{ToTidyName(item)}", lifetime, $"new {item}({string.Join(", ", args)})");
                 }
             }
             else
             {
-                yield return new FieldItem(ToTidyName(item), lifetime, $"new {item}({string.Join(", ", args)})");
+                yield return new FieldItem(item.ToString() , ToTidyName(item), lifetime, $"new {item}({string.Join(", ", args)})");
             }
         }
     }

@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 namespace tsr_di;
 
 internal record class ResolverItem(string IdentName, string? Key,  string FieldName);
-internal record class FieldItem(string FieldName, LifeTime LifeTime, string InitializeString);
+internal record class FieldItem(string TypeName , string FieldName, LifeTime LifeTime, string InitializeString);
 internal record class DelegateItem(string ReturnType, string Name, ImmutableArray<string> ArgList, bool Create = true);
 
 internal class ResultOrError<T>
