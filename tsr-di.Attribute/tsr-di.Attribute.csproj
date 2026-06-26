@@ -8,11 +8,35 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
 	<DefineConstants>$(DefineConstants);TSR_DI_ATTRIBUTES_PACKAGE</DefineConstants>
+    <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
   </PropertyGroup>
+
+      <PropertyGroup>
+       <IsPackable>true</IsPackable>
+        <Version>1.0.1</Version>
+        <Title>tsr-di.Attribute</Title>
+        <Description>T-Service/Symbol-Resolver</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/tesurijp/tsr-di</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/tesurijp/tsr-di</RepositoryUrl>
+        <Authors>tesuri</Authors>
+        <PackageTags>IoC DI SourceGenerator</PackageTags>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+      </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="../tsr-di/template/Attributes.cs" Link="Attributes.cs" />
     <Compile Include="../tsr-di/Polyfills/IsExternalInit.cs" Link="IsExternalInit.cs" />
   </ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+	</ItemGroup>
+
+	<Target Name="GetDependencyTargetPaths" AfterTargets="ResolvePackageDependenciesForBuild">
+		<ItemGroup>
+			<TargetPathWithTargetPlatformMoniker Include="@(ResolvedCompileFileDefinitions)" IncludeRuntimeDependency="false" />
+		</ItemGroup>
+	</Target>
 
 </Project>

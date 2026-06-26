@@ -13,6 +13,19 @@
 		<GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
 		<DefineConstants>$(DefineConstants);TSR_DI_NEED_INTERNAL_ATTRIBUTE</DefineConstants>
 	</PropertyGroup>
+	
+      <PropertyGroup>
+       <IsPackable>true</IsPackable>
+        <Version>1.0.1</Version>
+        <Title>tsr-di</Title>
+        <Description>T-Service/Symbol-Resolver</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/tesurijp/tsr-di</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/tesurijp/tsr-di</RepositoryUrl>
+        <Authors>tesuri</Authors>
+        <PackageTags>IoC DI SourceGenerator</PackageTags>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+      </PropertyGroup>
 
 	<ItemGroup>
 		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />

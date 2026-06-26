@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../tsr-di/tsr-di.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" Condition="'$(Configuration)' == 'ProjectReferTest'" />
-    <PackageReference Include="tsr-di" PrivateAssets="All"  Condition="'$(Configuration)' == 'NugetReferTest'" />
+    <PackageReference Include="tsr-di" Version="1.0.1" PrivateAssets="All"  Condition="'$(Configuration)' == 'NugetReferTest'" />
   </ItemGroup>
 
 </Project>
