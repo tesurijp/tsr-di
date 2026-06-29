@@ -66,14 +66,16 @@ public class Generator : IIncrementalGenerator
         var fieldsItemsAll = fieldsItems.Append(funcfieldsItems);
 
         // Post output
-        var allItems = svcResolverItem.Combine(fieldsItemsAll).Combine(resolveItem).Combine(delegateItem).Combine(typeArgsCount);
-        var allErrors = fieldErrors.Append(funcfieldErrors).Append(resolveErrors).Append(svcDelegateErrors).Append(svcDelegateErrors);
         context.RegisterSourceOutput(svcResolverItem.Combine(fieldsItemsAll), Emitter.WriteFieldItems);
         context.RegisterSourceOutput(svcResolverItem.Combine(delegateItem), Emitter.WriteDelegates);
         context.RegisterSourceOutput(svcResolverItem.Combine(typeArgsCount), Emitter.WriteResolveFunc);
         context.RegisterSourceOutput(svcResolverItem.Combine(resolveItem), Emitter.WriteTypedEnum);
         context.RegisterSourceOutput(svcResolverItem.Combine(resolveItem), Emitter.WriteInnerResolve);
-        context.RegisterSourceOutput(allErrors, Emitter.OutputErrors);
+        context.RegisterSourceOutput(fieldErrors, Emitter.OutputErrors);
+        context.RegisterSourceOutput(funcfieldErrors, Emitter.OutputErrors);
+        context.RegisterSourceOutput(resolveErrors, Emitter.OutputErrors);
+        context.RegisterSourceOutput(svcResolverErrors, Emitter.OutputErrors);
+        context.RegisterSourceOutput(svcDelegateErrors, Emitter.OutputErrors);
 
     }
 
