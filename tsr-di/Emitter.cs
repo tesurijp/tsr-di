@@ -9,10 +9,9 @@ internal static class Emitter
 {
     internal static void OutputErrors(SourceProductionContext context, ImmutableArray<ErrorItem> errors)
     {
-        foreach (var err in errors)
+        foreach(var item in errors)
         {
-            var diagnostic = Diagnostic.Create(err.Error, err.PrimaryLocation, err.TypeName);
-            context.ReportDiagnostic(diagnostic);
+            context.ReportDiagnostic(item);
         }
     }
     internal static void WriteAttribute(IncrementalGeneratorInitializationContext context) =>
@@ -127,48 +126,42 @@ internal static class Emitter
     }
     private static IEnumerable<string> MakeExtendResolveFunc(ImmutableArray<int> counts)
     {
-        foreach(var i in counts)
+        foreach (var i in counts.Where(i => i > 1))
         {
-            if(i > 1)
+            var typeArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"T{ar}"));
+            var retArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"res{ar}"));
+            var typeEnumArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"IEnumerable<T{ar}>"));
+            var keyArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"ServiceKey key{ar} = ServiceKey.None"));
+
+            yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
+            yield return $"public static ({typeArgs}) Resolve<{typeArgs}>({keyArgs}) {{";
+            yield return "    var localStore = new FieldStore();";
+            for (var num = 1; num <= i; num++)
             {
-                var typeArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"T{ar}"));
-                var retArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"res{ar}"));
-                var typeEnumArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"IEnumerable<T{ar}>"));
-                var keyArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"ServiceKey key{ar} = ServiceKey.None"));
-
-                yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
-                yield return $"public static ({typeArgs}) Resolve<{ typeArgs}>({keyArgs}) {{";
-                yield return "    var localStore = new FieldStore();";
-                for(var num =1; num <= i; num++)
-                {
-                    yield return $"    var res{num} = ((IResolver<T{num}>)inner).Resolve(localStore, key{num});";
-                }
-                yield return $"    return ({retArgs});";
-                yield return "}";
-
-                yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
-                yield return $"public static ({typeEnumArgs}) ResolveAll<{ typeArgs}>() {{";
-                yield return "    var localStore = new FieldStore();";
-                for(var num =1; num <= i; num++)
-                {
-                    yield return $"    var res{num} = ((IResolver<T{num}>)inner).ResolveAll(localStore);";
-                }
-                yield return $"    return ({retArgs});";
-                yield return "}";
+                yield return $"    var res{num} = ((IResolver<T{num}>)inner).Resolve(localStore, key{num});";
             }
+            yield return $"    return ({retArgs});";
+            yield return "}";
+
+            yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
+            yield return $"public static ({typeEnumArgs}) ResolveAll<{typeArgs}>() {{";
+            yield return "    var localStore = new FieldStore();";
+            for (var num = 1; num <= i; num++)
+            {
+                yield return $"    var res{num} = ((IResolver<T{num}>)inner).ResolveAll(localStore);";
+            }
+            yield return $"    return ({retArgs});";
+            yield return "}";
         }
     }
 
 
     private static IEnumerable<string> MakeDelegatesLines(ImmutableArray<DelegateItem> items)
     {
-        foreach (var item in items)
+        foreach (var item in items.Where(i => i.Create))
         {
-            if (item.Create)
-            {
-                var actualList = item.ArgList.Select((tp, num) => $"{tp} p{num}");
-                yield return $"public delegate {item.ReturnType} {item.Name} ({string.Join(",", actualList)});";
-            }
+            var actualList = item.ArgList.Select((tp, num) => $"{tp} p{num}");
+            yield return $"public delegate {item.ReturnType} {item.Name} ({string.Join(",", actualList)});";
         }
     }
     private static IEnumerable<string> MakeExtensionLines(ImmutableArray<DelegateItem> items)

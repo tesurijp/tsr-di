@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace tsr_di;
 
@@ -7,6 +8,8 @@ internal record ErrorItem(DiagnosticDescriptor Error, string TypeName, Location 
 {
     internal ErrorItem(DiagnosticDescriptor error, ISymbol symbol) :
         this(error, symbol.ToString(), symbol.Locations.FirstOrDefault(loc => loc.IsInSource) ?? Location.None) { }
+
+    public static implicit operator Diagnostic(ErrorItem item) => Diagnostic.Create(item.Error, item.PrimaryLocation, item.TypeName);
 }
 internal static class DiagnosticDescriptors
 {

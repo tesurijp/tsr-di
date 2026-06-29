@@ -33,10 +33,10 @@ public class Generator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        CompilationCheck(context);
-
         // PreOutput
         Emitter.WriteAttribute(context);
+
+        CompilationCheck(context);
 
         // Collect info
         var constSymbol = Collector.ConstSymbols(context);
@@ -76,12 +76,6 @@ public class Generator : IIncrementalGenerator
         context.RegisterSourceOutput(resolveErrors, Emitter.OutputErrors);
         context.RegisterSourceOutput(svcResolverErrors, Emitter.OutputErrors);
         context.RegisterSourceOutput(svcDelegateErrors, Emitter.OutputErrors);
-
     }
-
-
-
-
-
 }
 
