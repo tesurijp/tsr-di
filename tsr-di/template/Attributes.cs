@@ -49,7 +49,7 @@ partial class ServiceClassAttribute : Attribute
 [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
 partial class FromNamedAttribute(string Name): Attribute
 {
-    public string Name { get; init; } = Name;
+    public string Name { get; set; } = Name;
 }
 
 [AttributeUsage(AttributeTargets.Method , AllowMultiple = false)]
