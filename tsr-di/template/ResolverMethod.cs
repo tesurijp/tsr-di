@@ -21,11 +21,7 @@ private interface IResolver<T>
     IEnumerable<T> ResolveAll(FieldStore store);
 }}
 
-[System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
-private class InnerResolver : {2}
-{{
-{3}
-}}
+private partial class InnerResolver;
 
 static readonly InnerResolver inner = new ();
 
@@ -35,6 +31,6 @@ public static T Resolve<T>(ServiceKey  key= ServiceKey.None) => ((IResolver<T>)i
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
 public static IEnumerable<T> ResolveAll<T>() => ((IResolver<T>)inner).ResolveAll(new FieldStore());
 
-{4}
+{2}
 
 }}

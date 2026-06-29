@@ -18,37 +18,59 @@ internal static class Emitter
     internal static void WriteAttribute(IncrementalGeneratorInitializationContext context) =>
         context.RegisterPostInitializationOutput((ctx) => ctx.AddSource("Attribute.g.cs", TemplateReader.AttributeCS));
 
-    internal static void WriteSource(SourceProductionContext context, ((((ImmutableArray<(string nmspc, string clsnm)> , ImmutableArray<FieldItem>), ImmutableArray<ResolverItem>) , ImmutableArray<DelegateItem>), ImmutableArray<int>) param)
+    internal static void WriteFieldItems(SourceProductionContext context, (ImmutableArray<(string nmspc, string clsnm)> ident, ImmutableArray<FieldItem> fieldItems) param)
     {
-        var ident = param.Item1.Item1.Item1.Item1;
-        var fieldItems = param.Item1.Item1.Item1.Item2;
-        var resolveItems = param.Item1.Item1.Item2;
-        var delegateItems = param.Item1.Item2;
-        var count = param.Item2;
-
-        if (ident.Any())
+        if (param.ident.Any())
         {
-            var (nmspc, clsnm) = ident.First();
-            var fieldsLine = MakeFieldsLines(fieldItems);
+            var (nmspc, clsnm) = param.ident.First();
+            var fieldsLine = MakeFieldsLines(param.fieldItems);
             var storeCsCode = string.Format(TemplateReader.StoreFieldsCS, nmspc, clsnm, string.Join("\r\n", fieldsLine));
+            context.AddSource($"Properties.g.cs", storeCsCode);
+        }
+    }
+    internal static void WriteTypedEnum(SourceProductionContext context, (ImmutableArray<(string nmspc, string clsnm)> ident, ImmutableArray<ResolverItem> resolveItems) param)
+    {
+        if (param.ident.Any())
+        {
+            var (nmspc, clsnm) = param.ident.First();
+            var list = param.resolveItems.Where(i => i.Key is not null).Select(i => i.Key!).Distinct();
+            var enumCS = string.Format(TemplateReader.ServiceTypeEnumCS, nmspc, clsnm, string.Join(",\r\n", list));
+            context.AddSource($"TypedEnum.g.cs", enumCS);
+        }
+    }
 
-            var lookup = resolveItems.ToLookup(i => i.IdentName, i => i);
+    internal static void WriteInnerResolve(SourceProductionContext context, (ImmutableArray<(string nmspc, string clsnm)> ident, ImmutableArray<ResolverItem> resolveItems) param)
+    {
+        if (param.ident.Any())
+        {
+            var (nmspc, clsnm) = param.ident.First();
+            var lookup = param.resolveItems.ToLookup(i => i.IdentName, i => i);
             var resoleveInterfaces = MakeResolveInterfaces(lookup);
             var resoleveFuncs = MakeResolveFunc(lookup);
-            var extendResolveLine = MakeExtendResolveFunc(count);
-            var resolveCsCode = string.Format(TemplateReader.ResolveMethodCS, nmspc, clsnm, string.Join(",", resoleveInterfaces), string.Join("\r\n", resoleveFuncs), string.Join("\r\n", extendResolveLine));
-
-            var list = resolveItems.Where(i => i.Key is not null).Select(i => i.Key!).Distinct();
-            var enumCS = string.Format(TemplateReader.ServiceTypeEnumCS, nmspc, clsnm, string.Join(",\r\n", list));
-
-            var delegateLines = MakeDelegatesLines(delegateItems);
-            var extensionLines = MakeExtensionLines(delegateItems);
+            var resolveCsCode = string.Format(TemplateReader.InnerResolverCS, nmspc, clsnm, string.Join(",", resoleveInterfaces), string.Join("\r\n", resoleveFuncs));
+            context.AddSource($"InnerResolver.g.cs", resolveCsCode);
+        }
+    }
+    internal static void WriteDelegates(SourceProductionContext context, (ImmutableArray<(string nmspc, string clsnm)> ident, ImmutableArray<DelegateItem> delegateItems) param)
+    {
+        if (param.ident.Any())
+        {
+            var (nmspc, clsnm) = param.ident.First();
+            var delegateLines = MakeDelegatesLines(param.delegateItems);
+            var extensionLines = MakeExtensionLines(param.delegateItems);
             var delegatesCsCode = string.Format(TemplateReader.DelegatesCS, nmspc, clsnm, string.Join("\r\n", delegateLines), string.Join("\r\n", extensionLines));
-
-            context.AddSource($"Properties.g.cs", storeCsCode);
-            context.AddSource($"Resolve.g.cs", resolveCsCode);
-            context.AddSource($"TypedEnum.g.cs", enumCS);
             context.AddSource($"Delegates.g.cs", delegatesCsCode);
+        }
+    }
+
+    internal static void WriteResolveFunc(SourceProductionContext context, (ImmutableArray<(string nmspc, string clsnm)> ident, ImmutableArray<int> count) param)
+    {
+        if (param.ident.Any())
+        {
+            var (nmspc, clsnm) = param.ident.First();
+            var extendResolveLine = MakeExtendResolveFunc(param.count);
+            var resolveCsCode = string.Format(TemplateReader.ResolveMethodCS, nmspc, clsnm, string.Join("\r\n", extendResolveLine));
+            context.AddSource($"Resolve.g.cs", resolveCsCode);
         }
     }
 

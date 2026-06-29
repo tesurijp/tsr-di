@@ -68,7 +68,11 @@ public class Generator : IIncrementalGenerator
         // Post output
         var allItems = svcResolverItem.Combine(fieldsItemsAll).Combine(resolveItem).Combine(delegateItem).Combine(typeArgsCount);
         var allErrors = fieldErrors.Append(funcfieldErrors).Append(resolveErrors).Append(svcDelegateErrors).Append(svcDelegateErrors);
-        context.RegisterSourceOutput(allItems, Emitter.WriteSource);
+        context.RegisterSourceOutput(svcResolverItem.Combine(fieldsItemsAll), Emitter.WriteFieldItems);
+        context.RegisterSourceOutput(svcResolverItem.Combine(delegateItem), Emitter.WriteDelegates);
+        context.RegisterSourceOutput(svcResolverItem.Combine(typeArgsCount), Emitter.WriteResolveFunc);
+        context.RegisterSourceOutput(svcResolverItem.Combine(resolveItem), Emitter.WriteTypedEnum);
+        context.RegisterSourceOutput(svcResolverItem.Combine(resolveItem), Emitter.WriteInnerResolve);
         context.RegisterSourceOutput(allErrors, Emitter.OutputErrors);
 
     }
