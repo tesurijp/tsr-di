@@ -50,12 +50,12 @@ public class Generator : IIncrementalGenerator
         var serviceFunctions = localServiceFunctions.Append(referServiceFunctions);
 
         // Convert and Check
-        var fieldsItemsOrError = Mapper.ToFieldItems(serviceClass, serviceFunctions, constSymbol);
-        var funcFieldsItemsOrError = Mapper.ToFunctionField(serviceFunctions, constSymbol);
-        var resolveItemOrError = Mapper.ToResolveItems(directUsedTypes, serviceClass, serviceFunctions, constSymbol);
-        var delegateItemOrError = Mapper.ToDelegateItem(serviceFunctions, constSymbol);
-        var svcResolverItemOrError = Mapper.ToSvcResolverName(serviceResolverClass);
-        var typeArgsCount = Mapper.ToResolveMethodArgs(directUsedTypes);
+        var fieldsItemsOrError = FieldStoreMapper.ToFieldItems(serviceClass, serviceFunctions, constSymbol);
+        var funcFieldsItemsOrError = FieldStoreMapper.ToFunctionField(serviceFunctions, constSymbol);
+        var resolveItemOrError = ResolverFunctionMapper.ToResolveItems(directUsedTypes, serviceClass, serviceFunctions, constSymbol);
+        var delegateItemOrError = DeclarationMapper.ToDelegateItem(serviceFunctions, constSymbol);
+        var svcResolverItemOrError = ResolverFunctionMapper.ToSvcResolverName(serviceResolverClass);
+        var typeArgsCount = DeclarationMapper.ToResolveMethodArgs(directUsedTypes);
 
         // Split data and items
         var (fieldsItems, fieldErrors) = fieldsItemsOrError.Split();

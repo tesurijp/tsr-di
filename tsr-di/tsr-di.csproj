@@ -47,9 +47,4 @@
 		<EmbeddedResource Include="template/*" /> 
 		<Compile Include="template/Attributes.cs" Link="Attributes.cs" />
 	</ItemGroup>
-	<ItemGroup>
-	  <Compile Update="Mapper_*.cs">
-		<DependentUpon>Mapper.cs</DependentUpon>
-	  </Compile>
-	</ItemGroup>
 </Project>

@@ -5,7 +5,7 @@ internal static class TemplateReader
     public static readonly string AttributeCS = GetStreamText($"{TemplateFolder}.Attributes.cs");
     public static readonly string ResolveMethodCS = GetStreamText($"{TemplateFolder}.ResolverMethod.cs");
     public static readonly string InnerResolverCS = GetStreamText($"{TemplateFolder}.InnerResolver.cs");
-    public static readonly string StoreFieldsCS = GetStreamText($"{TemplateFolder}.StoreFields.cs");
+    public static readonly string FieldStoreCS = GetStreamText($"{TemplateFolder}.FieldStore.cs");
     public static readonly string DelegatesCS= GetStreamText($"{TemplateFolder}.Delegates.cs");
 
     public static readonly string ServiceTypeEnumCS = GetStreamText($"{TemplateFolder}.ServiceTypeEnum.cs");

@@ -23,7 +23,7 @@ internal static class Emitter
         {
             var (nmspc, clsnm) = param.ident.First();
             var fieldsLine = MakeFieldsLines(param.fieldItems);
-            var storeCsCode = string.Format(TemplateReader.StoreFieldsCS, nmspc, clsnm, string.Join("\r\n", fieldsLine));
+            var storeCsCode = string.Format(TemplateReader.FieldStoreCS, nmspc, clsnm, string.Join("\r\n", fieldsLine));
             context.AddSource($"Properties.g.cs", storeCsCode);
         }
     }
