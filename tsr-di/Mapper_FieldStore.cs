@@ -72,6 +72,16 @@ internal static class FieldStoreMapper
                 yield return new ErrorItem(DiagnosticDescriptors.InvalidServiceFunctionKey, item.ToString(), GetAttributeFullLocation(item, sset.SvcFuncAttr));
             }
 
+            if (type != null)
+            {
+                var(typeRetType, typeArgs ) = GetSignature(type.DelegateInvokeMethod!);
+                var (actualReType, actualArgs) = GetSignature(item);
+                if( !(typeRetType == actualReType && typeArgs.SequenceEqual(actualArgs)))
+                {
+                    yield return new ErrorItem(DiagnosticDescriptors.InvalidServiceFunctionType, item.ToString(), GetAttributeFullLocation(item, sset.SvcFuncAttr));
+                }
+            }
+
             if (item.DeclaredAccessibility != Accessibility.Public)
             {
                 yield return new ErrorItem(DiagnosticDescriptors.ServiceFunctionMustBePublic, item);

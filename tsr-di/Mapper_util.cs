@@ -93,5 +93,6 @@ internal class MapperUtil
     }
     private static T GetAttributeParamValue<T>(T defaultValue, string keyField, ImmutableArray<KeyValuePair<string, TypedConstant>> args) =>
             (args.FirstOrDefault(a => a.Key == keyField).Value.Value is object value) ? (T)value : defaultValue;
+    internal static (string retType, IEnumerable<string> args) GetSignature(IMethodSymbol method) => (method.ReturnType.ToString(), method.Parameters.Select(t => t.Type.ToString()));
 }
 

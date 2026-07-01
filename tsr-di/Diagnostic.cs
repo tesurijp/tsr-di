@@ -61,5 +61,7 @@ internal static class DiagnosticDescriptors
         = CreateDiagnosticDescriptor($"{ID}0034", "Invalid service function key", "The service function key '{0}' is not a valid identifier");
     public static readonly DiagnosticDescriptor InvalidServiceFunctionName
         = CreateDiagnosticDescriptor($"{ID}0035", "Invalid service function name", "The service function name '{0}' is not a valid identifier");
+    public static readonly DiagnosticDescriptor InvalidServiceFunctionType
+        = CreateDiagnosticDescriptor($"{ID}0036", "Invalid service function type", "The service function type '{0}' is not compatible type");
 }
 

@@ -21,6 +21,7 @@ TD0032 | tsr-di | Error | DiagnosticDescriptors
 TD0033 | tsr-di | Error | DiagnosticDescriptors
 TD0034 | tsr-di | Error | DiagnosticDescriptors
 TD0035 | tsr-di | Error | DiagnosticDescriptors
+TD0036 | tsr-di | Error | DiagnosticDescriptors
 TD9001 | tsr-di | Error | DiagnosticDescriptors
 
 
