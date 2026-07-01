@@ -16,7 +16,7 @@
 	
       <PropertyGroup>
        <IsPackable>true</IsPackable>
-        <Version>1.0.1</Version>
+        <Version>1.0.2</Version>
         <Title>tsr-di</Title>
         <Description>T-Service/Symbol-Resolver</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
