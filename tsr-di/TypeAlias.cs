@@ -6,6 +6,13 @@ global using DelegateMappingResult = System.Collections.Immutable.ImmutableArray
 global using CollectedTypeSymbols = Microsoft.CodeAnalysis.IncrementalValueProvider<System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.INamedTypeSymbol>>;
 global using CollectedMethodSymbols = Microsoft.CodeAnalysis.IncrementalValueProvider<System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.IMethodSymbol>>;
 global using TypeSymbols = System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.INamedTypeSymbol>;
+
+global using ActualResolverFuncInfo = (
+    Microsoft.CodeAnalysis.INamedTypeSymbol? pcls,
+    System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.INamedTypeSymbol?> typeList,
+    System.Collections.Immutable.ImmutableArray<string> argList,
+    Microsoft.CodeAnalysis.Location loc);
+
 global using MethodSymbols = System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.IMethodSymbol>;
 
 global using FuncLookup = System.Linq.ILookup<string, (Microsoft.CodeAnalysis.IMethodSymbol tp, string? tagname)>;

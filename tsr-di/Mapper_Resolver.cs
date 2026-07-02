@@ -13,7 +13,7 @@ internal class ResolverFunctionMapper
 {
     internal static IncrementalValueProvider<SvcProviderMappingResult> ToSvcResolverName(CollectedTypeSymbols svcResolverClass) =>
         svcResolverClass.Select((x, _) => ToSvcResolverName_Internal(x).ToImmutableArray());
-    internal static IncrementalValueProvider<ResolverMappingResult> ToResolveItems(IncrementalValueProvider<ImmutableArray<(INamedTypeSymbol?, ImmutableArray<INamedTypeSymbol?>, Location)>> needResolveItems, CollectedTypeSymbols ItemList, CollectedMethodSymbols MethodList, IncrementalValueProvider<SymbolSet> symbols) =>
+    internal static IncrementalValueProvider<ResolverMappingResult> ToResolveItems(IncrementalValueProvider<ImmutableArray<ActualResolverFuncInfo>> needResolveItems, CollectedTypeSymbols ItemList, CollectedMethodSymbols MethodList, IncrementalValueProvider<SymbolSet> symbols) =>
         needResolveItems.Combine(ItemList).Combine(MethodList).Combine(symbols).Select((x, _) => ToResolveItems_Internal(x.Left.Left.Left, x.Left.Left.Right, x.Left.Right, x.Right.SvcResolverAttr, x.Right.SvcClassAttr, x.Right.SvcFuncAttr).ToImmutableArray());
     private static IEnumerable<ResultOrError<(string nmspc, string clsnm)>> ToSvcResolverName_Internal(TypeSymbols candidate)
     {
@@ -46,7 +46,7 @@ internal class ResolverFunctionMapper
     }
 
 
-    private static IEnumerable<ResultOrError<ResolverItem>> ToResolveItems_Internal(ImmutableArray<(INamedTypeSymbol? pcls,ImmutableArray<INamedTypeSymbol?> typeList, Location loc)> targets, TypeSymbols items, MethodSymbols mitems, INamedTypeSymbol svcResolverAttr, INamedTypeSymbol svcClsAttr, INamedTypeSymbol svcFuncAttr)
+    private static IEnumerable<ResultOrError<ResolverItem>> ToResolveItems_Internal(ImmutableArray<ActualResolverFuncInfo> targets, TypeSymbols items, MethodSymbols mitems, INamedTypeSymbol svcResolverAttr, INamedTypeSymbol svcClsAttr, INamedTypeSymbol svcFuncAttr)
     {
         var lookup = CreateTypeLookup(items, svcClsAttr);
         var lookupMethod = CreateFuncLookup(mitems, svcFuncAttr);

@@ -9,8 +9,8 @@ internal static class DeclarationMapper
 {
     internal static IncrementalValueProvider<DelegateMappingResult> ToDelegateItem(CollectedMethodSymbols ItemList, IncrementalValueProvider<SymbolSet> symbols) =>
         ItemList.Combine(symbols).Select((x, _) => ToDelegateItem_Internal(x.Left, x.Right).ToImmutableArray());
-    internal static IncrementalValueProvider<ImmutableArray<int>> ToResolveMethodArgs(IncrementalValueProvider<ImmutableArray<(INamedTypeSymbol?, ImmutableArray<INamedTypeSymbol?> items, Location)>> needResolveItems) =>
-        needResolveItems.Select((x, _) => x.Select(i => i.items.Length).Distinct().ToImmutableArray());
+    internal static IncrementalValueProvider<ImmutableArray<int>> ToResolveMethodArgs(IncrementalValueProvider<ImmutableArray<ActualResolverFuncInfo>> needResolveItems) =>
+        needResolveItems.Select((x, _) => x.Select(i => i.typeList.Length).Distinct().ToImmutableArray());
     private static IEnumerable<ResultOrError<DelegateItem>> ToDelegateItem_Internal(MethodSymbols items, SymbolSet sset)
     {
         Dictionary<string, DelegateItem> dupCheck = [];

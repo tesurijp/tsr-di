@@ -27,19 +27,21 @@ internal static class Collector
         c.GetTypeByMetadataName(GenericList)!
     ));
 
-    internal static IncrementalValuesProvider<(INamedTypeSymbol?, ImmutableArray<INamedTypeSymbol?>, Location)> FindResolveFunc(IncrementalGeneratorInitializationContext context) =>
+    internal static IncrementalValuesProvider<ActualResolverFuncInfo> FindResolveFunc(IncrementalGeneratorInitializationContext context) =>
         context.SyntaxProvider.CreateSyntaxProvider(
             (node, _) => node is InvocationExpressionSyntax caller && PreCheckResolveFunction(caller),
             (context, _) =>
             {
-                var mb = ((context.Node as InvocationExpressionSyntax)!.Expression as MemberAccessExpressionSyntax)!;
+                var InvExp = (context.Node as InvocationExpressionSyntax)!;
+                var argList = InvExp.ArgumentList.Arguments.Select(a => a.ToString()).ToImmutableArray();
+                var mb = (InvExp.Expression as MemberAccessExpressionSyntax)!;
                 if (mb.Name is GenericNameSyntax generic && generic.TypeArgumentList.Arguments.Count > 0)
                 {
                     var tp = context.SemanticModel.GetTypeInfo(mb.Expression).Type as INamedTypeSymbol;
                     var items = generic.TypeArgumentList.Arguments.Select(a => context.SemanticModel.GetTypeInfo(a).Type as INamedTypeSymbol).ToImmutableArray();
-                    return (tp,  items , mb.GetLocation());
+                    return (tp,  items , argList, mb.GetLocation());
                 }
-                return (null, [], Location.None);
+                return (null, [], argList, Location.None);
             });
 
     internal static IncrementalValuesProvider<INamedTypeSymbol> FindServiceResolver(IncrementalGeneratorInitializationContext context) =>
@@ -116,7 +118,4 @@ internal static class Collector
     private static bool PreCheckResolveFunction(InvocationExpressionSyntax node) =>
         node.Expression is MemberAccessExpressionSyntax { Name.Identifier.Text: "Resolve" } ||
         node.Expression is MemberAccessExpressionSyntax { Name.Identifier.Text: "ResolveAll" };
-
-    private static bool PreCheckBindFunction(InvocationExpressionSyntax node) =>
-        node.Expression is MemberAccessExpressionSyntax { Name.Identifier.Text: "Bind" };
 }
