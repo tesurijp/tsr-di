@@ -3,13 +3,14 @@ using System.Collections;
 
 namespace tsr_di;
 
-internal record class ResolverItem(string IdentName, string? Key,  string FieldName);
-internal record class FieldItem(string TypeName , string FieldName, LifeTime LifeTime, string InitializeString);
-internal record class DelegateItem(string ReturnType, string Name, ImmutableArray<string> ArgList, bool Create = true) 
+internal record class ResolverItem(string IdentName, string? Key, string FieldName)
 {
-    public bool AreSameSigunature(DelegateItem other) =>
-        ReturnType == other.ReturnType &&
-        StructuralComparisons.StructuralEqualityComparer.Equals(ArgList, other.ArgList);
+    internal bool NeedKeyResolve { get; set; } = true;
+}
+internal record class FieldItem(string TypeName , string FieldName, LifeTime LifeTime, string InitializeString);
+internal record class DelegateItem(string ReturnType, string Name, ImmutableArray<string> ArgList, bool Create = true)
+{
+    public bool AreSameSigunature(DelegateItem other) => ReturnType == other.ReturnType && StructuralComparisons.StructuralEqualityComparer.Equals(ArgList, other.ArgList);
 }
 
 internal class ResultOrError<T>

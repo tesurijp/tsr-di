@@ -33,15 +33,16 @@ internal static class Collector
             (context, _) =>
             {
                 var InvExp = (context.Node as InvocationExpressionSyntax)!;
-                var argList = InvExp.ArgumentList.Arguments.Select(a => a.ToString()).ToImmutableArray();
                 var mb = (InvExp.Expression as MemberAccessExpressionSyntax)!;
                 if (mb.Name is GenericNameSyntax generic && generic.TypeArgumentList.Arguments.Count > 0)
                 {
                     var tp = context.SemanticModel.GetTypeInfo(mb.Expression).Type as INamedTypeSymbol;
                     var items = generic.TypeArgumentList.Arguments.Select(a => context.SemanticModel.GetTypeInfo(a).Type as INamedTypeSymbol).ToImmutableArray();
-                    return (tp,  items , argList, mb.GetLocation());
+                    var argList = InvExp.ArgumentList.Arguments.Select(a => a.ToString().Replace("ServiceKey.", "")).ToArray();
+                    var argComplete = mb.Name.Identifier.Text == "Resolve" ? [.. items.Select((_, i) => argList.Length > i ? argList[i] : "None")] : ImmutableArray<string>.Empty;
+                    return (tp, items, argComplete, mb.GetLocation(), InvExp.GetLocation());
                 }
-                return (null, [], argList, Location.None);
+                return (null, [], [], Location.None, Location.None);
             });
 
     internal static IncrementalValuesProvider<INamedTypeSymbol> FindServiceResolver(IncrementalGeneratorInitializationContext context) =>

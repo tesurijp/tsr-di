@@ -11,7 +11,8 @@ global using ActualResolverFuncInfo = (
     Microsoft.CodeAnalysis.INamedTypeSymbol? pcls,
     System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.INamedTypeSymbol?> typeList,
     System.Collections.Immutable.ImmutableArray<string> argList,
-    Microsoft.CodeAnalysis.Location loc);
+    Microsoft.CodeAnalysis.Location typeArgsLoc,
+    Microsoft.CodeAnalysis.Location funcLoc);
 
 global using MethodSymbols = System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.IMethodSymbol>;
 

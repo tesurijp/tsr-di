@@ -39,6 +39,8 @@ internal static class DiagnosticDescriptors
         = CreateDiagnosticDescriptor($"{ID}0013", "Duplicate registration", "Multiple implementations are registered for the same interface '{0}'");
     public static readonly DiagnosticDescriptor ConflictKey
         = CreateDiagnosticDescriptor($"{ID}0014", "Duplicate keyed registration", "Multiple implementations are registered for the same interface '{0}' using the same key");
+    public static readonly DiagnosticDescriptor ArgCountMissmatch
+        = CreateDiagnosticDescriptor($"{ID}0015", "Argument count mismatch", "The number of provided arguments does not match the expected count");
 
     // Register ServiceClass
     public static readonly DiagnosticDescriptor ServiceClassMustBePublic
@@ -65,3 +67,4 @@ internal static class DiagnosticDescriptors
         = CreateDiagnosticDescriptor($"{ID}0036", "Invalid service function type", "The service function type '{0}' is not compatible type");
 }
 
+    

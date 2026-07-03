@@ -12,6 +12,7 @@ TD0011 | tsr-di | Error | DiagnosticDescriptors
 TD0012 | tsr-di | Error | DiagnosticDescriptors
 TD0013 | tsr-di | Error | DiagnosticDescriptors
 TD0014 | tsr-di | Error | DiagnosticDescriptors
+TD0015 | tsr-di | Error | DiagnosticDescriptors
 TD0021 | tsr-di | Error | DiagnosticDescriptors
 TD0022 | tsr-di | Error | DiagnosticDescriptors
 TD0023 | tsr-di | Error | DiagnosticDescriptors

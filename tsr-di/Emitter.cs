@@ -9,7 +9,7 @@ internal static class Emitter
 {
     internal static void OutputErrors(SourceProductionContext context, ImmutableArray<ErrorItem> errors)
     {
-        foreach(var item in errors)
+        foreach (var item in errors)
         {
             context.ReportDiagnostic(item);
         }
@@ -105,7 +105,7 @@ internal static class Emitter
         {
             var itemarray = item.ToArray();
             yield return $"        {item.Key} IResolver<{item.Key}>.Resolve(FieldStore localStore, ServiceKey key) => key switch {{";
-            foreach (var i in itemarray)
+            foreach (var i in itemarray.Where(i => i.NeedKeyResolve))
             {
                 var fld = $"ServiceKey.{(i.Key is null ? "None" : i.Key)}";
                 yield return $"            {fld} => ({item.Key})localStore.{i.FieldName},";

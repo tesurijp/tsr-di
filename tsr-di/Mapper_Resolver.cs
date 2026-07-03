@@ -45,17 +45,39 @@ internal class ResolverFunctionMapper
         }
     }
 
+    private static IEnumerable<ResultOrError<(INamedTypeSymbol tp, string arg, Location funcLoc)>> UsedArgByType(IEnumerable<ActualResolverFuncInfo> calls)
+    {
+        foreach (var (_, typeList, argList, _, funcLoc) in calls)
+        {
+            if (typeList.Length < argList.Length)
+            {
+                yield return new ErrorItem(DiagnosticDescriptors.ArgCountMissmatch, "", funcLoc);
+            }
+            else
+            {
+                for (var i = 0; i < argList.Length && i < typeList.Length; i++)
+                {
+                    var tp = typeList[i];
+                    var arg = argList[i];
+                    if (tp is not null)
+                    {
+                        yield return (tp, arg, funcLoc);
+                    }
+                }
+            }
+        }
+    }
 
     private static IEnumerable<ResultOrError<ResolverItem>> ToResolveItems_Internal(ImmutableArray<ActualResolverFuncInfo> targets, TypeSymbols items, MethodSymbols mitems, INamedTypeSymbol svcResolverAttr, INamedTypeSymbol svcClsAttr, INamedTypeSymbol svcFuncAttr)
     {
         var lookup = CreateTypeLookup(items, svcClsAttr);
         var lookupMethod = CreateFuncLookup(mitems, svcFuncAttr);
 
-        var flatlist = targets.SelectMany(i => i.typeList, (i, cls) => (i.pcls, cls, i.loc));
+        var flatlist = targets.SelectMany(i => i.typeList, (i, cls) => (i.pcls, cls, i.typeArgsLoc));
 
         foreach (var (pcls, cls, loc) in flatlist)
         {
-            if(pcls is null || cls is null || !Collector.HasAttribute(pcls, svcResolverAttr))
+            if (pcls is null || cls is null || !Collector.HasAttribute(pcls, svcResolverAttr))
             {
                 continue;
             }
@@ -77,17 +99,39 @@ internal class ResolverFunctionMapper
 
                         foreach (var errItem in items.Where(i => names.Contains(ToTidyName(i))))
                         {
-                            yield return new ErrorItem(descriptor, typename, errItem.Locations.FirstOrDefault(i=>i.IsInSource) ?? Location.None);
+                            yield return new ErrorItem(descriptor, typename, errItem.Locations.FirstOrDefault(i => i.IsInSource) ?? Location.None);
                         }
                     }
                 }
             }
         }
 
-        foreach (var resTarget in flatlist.Select(c => c.cls).Where(c=>c is not null).Distinct(SymbolEqualityComparer.Default))
+        var argsByTypeAndError = UsedArgByType(targets).ToArray();
+        foreach (var err in argsByTypeAndError.Where(i => i.HasError).Select(i => i.Error))
         {
+            yield return err!;
+        }
+
+        var usedKey = argsByTypeAndError.Where(i => !i.HasError).Select(i => i.Result).ToLookup(i => i.tp!, i => (i.arg, i.funcLoc), SymbolEqualityComparer.Default);
+
+        foreach (var i in usedKey)
+        {
+            var registerdkeys = lookup[i.Key].Select(t => t.tag.name ?? "None").Concat(lookupMethod[i.Key!.ToString()].Select(i => i.tagname ?? "None"));
+            foreach (var (arg, funcLoc) in i.ToArray())
+            {
+                if (!registerdkeys.Contains(arg))
+                {
+                    yield return new ErrorItem(DiagnosticDescriptors.NotRegisterdKeyOrMultipleKey, $"{i.Key} [{arg}]", funcLoc);
+                }
+            }
+        }
+
+        foreach (var resTarget in flatlist.Select(c => c.cls).Where(c => c is not null).Distinct(SymbolEqualityComparer.Default))
+        {
+            var keys = usedKey[resTarget].Select(i => i.arg);
             foreach (var item in ToResolveItem((resTarget as INamedTypeSymbol)!, lookup, lookupMethod))
             {
+                item.NeedKeyResolve = keys.Contains(item.Key ?? "None");
                 yield return item;
             }
         }
