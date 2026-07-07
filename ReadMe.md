@@ -32,7 +32,7 @@ Pure.DI ではサービスの「利用箇所」と「実装」を独立して定
 - 型安全な名前付き解決  
   - `Resolve<T>()` での名前付き解決は、自動生成される `ServiceKey` enum を指定します。
   - 実行時引数として文字列を直接渡す名前解決は行いません。
-- 複数アセンブリ（プロジェクト）対応**  
+- 複数アセンブリ（プロジェクト）対応  
   - 自身のプロジェクトだけでなく、参照しているプロジェクトやアセンブリも `ServiceClass` / `ServiceFunction` の検索対象となります。
 - インスタンス共有方法の指定  
   - 同一のクラスを複数のサービス（インターフェース）に紐づけて登録した際の、インスタンスの共有方法を指定できます。
@@ -181,7 +181,7 @@ public class Client([FromNamed("MainService")] IMyService service)
   xya(1, 2, 3); // 通常の呼び出し
 
   // 第1引数を固定（部分適用）し、残りの引数2つを受け取るデリゲート（Action<int, int>）を取得
-  var ya = to.Bind(1);
+  var ya = xya.Bind(1);
   ya(2, 3); // 内部で xya(1, 2, 3) が呼び出されます
   ```
 
@@ -209,16 +209,21 @@ tsr-di は主に以下のファイルを生成します
 
 また `SharingMode` の指定内容によって、インスタンスを保持するプロパティがサービスごとに分割されるか、あるいは共通化されるかが変わります。
 
-### `Resolve.g.cs`
+### `InnerResolve.g.cs`
 
-`Resolve<T>` および `ResolveAll<T>` の中身が定義されます。  
-ローカル変数として `FieldStore` をインスタンス化し、`InnerResolve`に実装された `IResolver<T>` のインターフェース型のメソッドを参照することで、`FieldStore` のどのフィールドを指定するか選択します。
-ローカル変数 `FieldStore` の寿命と DI としてのスコープが一致するため、スコープ管理専用のコードはありませんが、常に `FieldStore`のインスタンスが作成されるため、そこがネックになる可能性があります。
+参照されている全ての T 型と対応する`IResolver<T>.Resolve()` および、`IResolver<T>.ResolveAll()` を実装します。  
+引数として `FieldStore` をインスタンスを受けとり、ServiceKeyの switchで `FieldStore` のどのフィールドを指定するか選択します。  
 
-実装されるインターフェースは、コード上で実際に `Resolve<T>()` や `ResolveAll<T>()` の型引数として使用されている型 `T` のみに限定しており、登録しても`Resolve`の型引数として 利用していないインターフェースの判定処理は出力されません。
+実装される型はコード上で `Resolve<T>()` や `ResolveAll<T>()` の型引数として使用されている型 `T` のみに限定しており、登録しても`Resolve`の型引数として 利用していないインターフェースの判定処理は出力されません。
 このため `[ServiceClass]` や `[ServiceFunction]` 属性を付与していても実際にはコード上で解決要求のないサービスは、インターフェースへの参照が到達されることのないクラスや関数となり、Native AOT 等によるトリムの対象になりやすくなります。  
 
-`Resolve/ResolveAll` ともに、型引数数は、ソースコード上で利用されている数と対応して生成されます。
+### `Resolve.g.cs`
+
+`Resolve<T>` および `ResolveAll<T>` 、`Resolve<T1,T2...>()` などを実装します。  
+各メソッドの先頭で、ローカル変数として `FieldStore` をインスタンス化し、`InnerResolve` に実装された `IResolver<T>` の各メソッドを呼び出します。  
+(ローカル変数 `FieldStore` の寿命と DI としてのスコープが一致するため、スコープ管理専用のコードはありませんが、常に `FieldStore`のインスタンスが作成されるため、そこがネックになる可能性があります。)  
+`Resolve.g.cs` には型依存せず、型引数の数にのみ依存した実装が出力されます。
+
 
 ```csharp
 
@@ -240,6 +245,7 @@ public static (T1,T2,T3,T4) Resolve<T1,T2,T3,T4>(ServiceKey key1 = ServiceKey.No
     return (res1,res2,res3,res4);
 }
 ```
+
 
 ### `TypedEnum.g.cs`
 
