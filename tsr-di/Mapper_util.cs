@@ -13,12 +13,15 @@ internal class MapperUtil
     internal static string DelegateName(INamedTypeSymbol? tp, string? typename, IMethodSymbol item) => tp?.ToString() ?? $"I{typename ?? item.Name}";
     internal static TypeLookup CreateTypeLookup(TypeSymbols items, INamedTypeSymbol regAttr)
     {
+
+        bool IsSystemInterface(string name) => name.StartsWith("System.") || name.StartsWith("Microsoft.") || name.StartsWith("FSharp.");
+
         (string? name, SharingMode mode) _GetTag(INamedTypeSymbol tp)
         {
             var (name, _, shared) = GetServiceClassAttribute(regAttr, tp);
             return (name, shared);
         }
-        return items.SelectMany(item => item.AllInterfaces.Where(i=>i.DeclaredAccessibility == Accessibility.Public), (item, iftp) => (iftp, item))
+        return items.SelectMany(item => item.AllInterfaces.Where(i => i.DeclaredAccessibility == Accessibility.Public && !IsSystemInterface(i.ToString())), (item, iftp) => (iftp, item))
             .ToLookup(i => i.iftp, i => (tp: i.item, tag: _GetTag(i.item)), SymbolEqualityComparer.Default);
     }
 
@@ -48,6 +51,25 @@ internal class MapperUtil
     }
     internal static IEnumerable<ResolverItem> ToResolveItem(INamedTypeSymbol target, TypeLookup lookup, FuncLookup funcLookup)
     {
+        var clsItem = ToResolveItemClasses(target, lookup);
+        var fucItem = ToResolveItemFunctions(target.ToString(), funcLookup);
+        return clsItem.Concat(fucItem);
+    }
+
+    internal static IEnumerable<ResolverItem> ToResolveItemFunctions(string target, FuncLookup funcLookup)
+    {
+        var candidateFunc = funcLookup[target];
+        if (candidateFunc != null && candidateFunc.Count() > -1)
+        {
+            foreach (var (tp, tag) in candidateFunc)
+            {
+                yield return new(target.ToString(), tag, ToTidyName(tp));
+            }
+        }
+    }
+
+    internal static IEnumerable<ResolverItem> ToResolveItemClasses(ISymbol target, TypeLookup lookup)
+    {
         var candidate = lookup[target];
 
         if (candidate != null && candidate.Count() > -1)
@@ -56,21 +78,12 @@ internal class MapperUtil
             {
                 if (tag.mode == SharingMode.IsolatePerService)
                 {
-                    yield return new(target.ToString(), tag.name, $"{MapperUtil.ToTidyName(target)}_{MapperUtil.ToTidyName(tp)}");
+                    yield return new(target.ToString(), tag.name, $"{ToTidyName(target)}_{ToTidyName(tp)}");
                 }
                 else
                 {
-                    yield return new(target.ToString(), tag.name, MapperUtil.ToTidyName(tp));
+                    yield return new(target.ToString(), tag.name, ToTidyName(tp));
                 }
-            }
-        }
-
-        var candidateFunc = funcLookup[target.ToString()];
-        if (candidateFunc != null && candidateFunc.Count() > -1)
-        {
-            foreach (var (tp, tag) in candidateFunc)
-            {
-                yield return new(target.ToString(), tag, MapperUtil.ToTidyName(tp));
             }
         }
     }
