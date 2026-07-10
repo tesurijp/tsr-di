@@ -16,7 +16,7 @@
 	
       <PropertyGroup>
        <IsPackable>true</IsPackable>
-        <Version>1.0.3</Version>
+        <Version>1.0.4</Version>
         <Title>tsr-di</Title>
         <Description>T-Service/Symbol-Resolver</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -25,11 +25,13 @@
         <Authors>tesuri</Authors>
         <PackageTags>IoC DI SourceGenerator</PackageTags>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageReadmeFile>ReadMe.md</PackageReadmeFile>
       </PropertyGroup>
 
 	<ItemGroup>
 		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
         <Content Include="build\tsr-di.targets" Pack="True" PackagePath="build" />
+		<None Include="$(SolutionDir)ReadMe.md" Pack="true" PackagePath="" />
 	</ItemGroup>
 
 	<Target Name="GetDependencyTargetPaths" AfterTargets="ResolvePackageDependenciesForBuild">
