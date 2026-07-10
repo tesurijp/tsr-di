@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace tsr_di;
 
@@ -24,7 +26,7 @@ internal static class Emitter
             var (nmspc, clsnm) = param.ident.First();
             var fieldsLine = MakeFieldsLines(param.fieldItems);
             var storeCsCode = string.Format(TemplateReader.FieldStoreCS, nmspc, clsnm, string.Join("\r\n", fieldsLine));
-            context.AddSource($"Properties.g.cs", storeCsCode);
+            context.AddSource($"InnerFieldStore.g.cs", storeCsCode);
         }
     }
     internal static void WriteTypedEnum(SourceProductionContext context, (ImmutableArray<(string nmspc, string clsnm)> ident, ImmutableArray<ResolverItem> resolveItems) param)
@@ -72,6 +74,18 @@ internal static class Emitter
             context.AddSource($"Resolve.g.cs", resolveCsCode);
         }
     }
+
+    internal static void WriteResolverProp(SourceProductionContext context, (ImmutableArray<(string nmspc, string clsnm)> ident, ImmutableArray<ResolverItem> resolveItems) param)
+    {
+        if (param.ident.Any())
+        {
+            var (nmspc, clsnm) = param.ident.First();
+            var extendResolveLine = MakeResolverProperties(param.resolveItems);
+            var resolverPropertyCode= string.Format(TemplateReader.ResolverPropertyCS, nmspc, clsnm, string.Join("\r\n", extendResolveLine));
+            context.AddSource($"ResolveProp.g.cs", resolverPropertyCode);
+        }
+    }
+
 
     private static IEnumerable<string> MakeFieldsLines(IEnumerable<FieldItem> items)
     {
@@ -122,6 +136,32 @@ internal static class Emitter
             }
             yield return "        ];";
             yield return "";
+        }
+    }
+
+    private static IEnumerable<string> MakeResolverProperties(ImmutableArray<ResolverItem> items)
+    {
+        foreach(var i in items)
+        {
+            var splitName = i.IdentName.Split('.');
+            var nmspc = splitName.Take(splitName.Length - 1);
+            var cls = splitName.Last();
+            var pre = new StringBuilder();
+            var post = new StringBuilder();
+
+            foreach (var nm in nmspc)
+            {
+                pre.Append("public static partial class ");
+                pre.Append(nm);
+                pre.Append(" { ");
+
+                post.Append(" }");
+            }
+            var NamedOpt = i.Key is null ? "" : $"_{i.Key}";
+            var FldName = Regex.Replace(cls, @"[,\s<>]", "_");
+            yield return pre.ToString();
+            yield return $"public static {(splitName.Length > 1 ? "global::" : "")}{i.IdentName} {FldName}{NamedOpt} =>new FieldStore().{i.FieldName};";
+            yield return post.ToString();
         }
     }
     private static IEnumerable<string> MakeExtendResolveFunc(ImmutableArray<int> counts)

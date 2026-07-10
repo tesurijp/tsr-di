@@ -142,3 +142,17 @@ internal class ResolverFunctionMapper
             tp.DeclaringSyntaxReferences.Select(syntaxRef => syntaxRef.GetSyntax()).OfType<TypeDeclarationSyntax>().Any(typeDecl => typeDecl.Modifiers.Any(SyntaxKind.PartialKeyword));
 }
 
+internal class ResolverPropertyMapper
+{
+    internal static IncrementalValueProvider<ImmutableArray<ResolverItem>> ToResolveItems(CollectedTypeSymbols ItemList, CollectedMethodSymbols MethodList, IncrementalValueProvider<SymbolSet> symbols) =>
+        ItemList.Combine(MethodList).Combine(symbols).Select((x, _) => ToResolveItems_Internal(x.Left.Left, x.Left.Right, x.Right.SvcClassAttr, x.Right.SvcFuncAttr).ToImmutableArray());
+
+    private static IEnumerable<ResolverItem> ToResolveItems_Internal(TypeSymbols items, MethodSymbols mitems, INamedTypeSymbol svcClsAttr, INamedTypeSymbol svcFuncAttr)
+    {
+        var lookup = CreateTypeLookup(items, svcClsAttr);
+        var lookupMethod = CreateFuncLookup(mitems, svcFuncAttr);
+        var typeList = lookup.SelectMany(i => ToResolveItemClasses((INamedTypeSymbol)i.Key!, lookup));
+        var mtdList = lookupMethod.SelectMany(i => ToResolveItemFunctions(i.Key, lookupMethod));
+        return typeList.Concat(mtdList);
+    }
+}

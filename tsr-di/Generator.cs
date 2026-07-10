@@ -56,6 +56,7 @@ public class Generator : IIncrementalGenerator
         var delegateItemOrError = DeclarationMapper.ToDelegateItem(serviceFunctions, constSymbol);
         var svcResolverItemOrError = ResolverFunctionMapper.ToSvcResolverName(serviceResolverClass);
         var typeArgsCount = DeclarationMapper.ToResolveMethodArgs(directUsedTypes);
+        var resolvPropList = ResolverPropertyMapper.ToResolveItems(serviceClass, serviceFunctions, constSymbol);
 
         // Split data and items
         var (fieldsItems, fieldErrors) = fieldsItemsOrError.Split();
@@ -71,6 +72,7 @@ public class Generator : IIncrementalGenerator
         context.RegisterSourceOutput(svcResolverItem.Combine(typeArgsCount), Emitter.WriteResolveFunc);
         context.RegisterSourceOutput(svcResolverItem.Combine(resolveItem), Emitter.WriteTypedEnum);
         context.RegisterSourceOutput(svcResolverItem.Combine(resolveItem), Emitter.WriteInnerResolve);
+        context.RegisterSourceOutput(svcResolverItem.Combine(resolvPropList), Emitter.WriteResolverProp);
         context.RegisterSourceOutput(fieldErrors, Emitter.OutputErrors);
         context.RegisterSourceOutput(funcfieldErrors, Emitter.OutputErrors);
         context.RegisterSourceOutput(resolveErrors, Emitter.OutputErrors);

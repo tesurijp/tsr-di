@@ -60,9 +60,7 @@ Pure.DI ではサービスの「利用箇所」と「実装」を独立して定
 ```csharp
 [ServiceResolver]
 public static partial class AppResolver;
-```
 
-```csharp
 var func1 = AppResolver.Resolve<IFunc1>()
 var (func1, func2) = AppResolver.Resolve<IFunc1,IFrunc2>()
 ```
@@ -114,9 +112,7 @@ public class Commands
     [ServiceFunction(ServiceName = "ExecuteCommand")]
     public static int Execute(string value) => value.Length;
 }
-```
 
-```csharp
 using MyApp.AutoDefined;
 
 var execute = AppResolver.Resolve<IExecuteCommand>();
@@ -162,6 +158,25 @@ public class Client([FromNamed("MainService")] IMyService service)
   - `ResolveAll<T>()` は、名前の有無に関係なく `T` 型で登録されたすべてのインスタンスを返します（並び順は保証されません）。
   - `Resolve/ResolveAll` は型引数を複数指定可能です。複数指定した場合の戻り値は、指定した順のタプルとなります。
     - `T Resolve<T>()` 、`(IEnumerable<T1>, IEnumerable<T2>)  ResolveAll<T1,T2>()`、`(T1,T2,T3,T4 .... Tn) ResolveAll<T1,T2,T3,T4 ... Tn>()`
+- **ダイレクトプロパティ解決**  
+  Resolve<T>()と同等の機能ですが、tsr-di の特徴を示す解決インタフェースです。  
+  `[ServiceResolver]` を付与したクラス内に、public な静的クラス `Services` が作成されます。その内部にインターフェースと同じ名前をもつ読み出し専用プロパティが用意されるので、そのプロパティを参照することで解決されます。  
+  `Services`クラス内は、名前空間ごとに階層的な静的クラスが作成されます。Namedが付与されたサービスは、インターフェース名の後ろに _[名前] を持つプロパティとして用意されます。
+
+  Resolve<T>() の中も可能な限り省力化していますが、ServiceKey の解決は動作することをコンパイル時にチェックしますが、分岐は実行時に発生します。ダイレクトプロパティ解決では、その判定も行なわれません。  
+
+  ```csharp
+  [ServiceClass(LifeTime = LifeTime.Singleton)]
+  public class MyService1 : IMyService;
+  [ServiceClass(LifeTime = LifeTime.Singleton, Name = "MainService")]
+  public class MyService2 : IMyService;
+
+  var svc1= ResolverClass.Services.TestApp.IMyService
+  // var svc1= ResolverClass.Resolve<IMyService>(); と同等
+  var svc2= ResolverClass.Services.TestApp.IMyService_MainService
+  // var svc2= ResolverClass.Resolve<IMyService>(ServiceKey.MainService); と同等
+  ```
+
 - **コンストラクター注入**  
   コンストラクター引数で要求された型に、対応するサービスを注入します。  
   `Resolve<T>()` などで起点として要求された型から、そのコンストラクター引数で要求されている型を再帰的にたどって依存関係を解決し、必要なインスタンスをコンストラクターへ渡します。  
@@ -197,7 +212,7 @@ tsr-di は主に以下のファイルを生成します
 複数プロジェクトで利用する場合は、属性クラスの定義を共通化する必要があるため、各プロジェクトから `tsr-di.Attribute` プロジェクト（またはパッケージ）を参照します。  
 その場合、生成された本ファイル内の属性定義は無効になります。単一プロジェクトで他のプロジェクトのサービスを検索する必要がない場合は、`tsr-di.Attribute` を追加参照することなく、自動生成される本ファイル内の属性をそのまま利用できます。
 
-### `Properties.g.cs`
+### `InnerFieldStore.g.cs`
 
 `FieldStore` クラスが定義され、その中に登録されたクラスサービスや関数 delegate を管理するプロパティが作成されます。  
 ライフタイムの違いはプロパティの内部実装で吸収されるため、利用側はライフタイムの違いを意識する必要がありません。  
@@ -208,6 +223,21 @@ tsr-di は主に以下のファイルを生成します
 - `Transient`: 保持されず、毎回 `new()` するコードになります。
 
 また `SharingMode` の指定内容によって、インスタンスを保持するプロパティがサービスごとに分割されるか、あるいは共通化されるかが変わります。
+
+```csharp
+private class FieldStore {
+    // Transient
+    internal tsr_di.test.SimpleResolveDefault SimpleResolveDefault_41A027181B0F898B {get =>  new tsr_di.test.SimpleResolveDefault(); }
+
+    // Singleton
+    private static tsr_di.test.SimpleResolveSingleton? _SimpleResolveSingleton_1A12D1D0BCCE9EF5;
+    private static Lock _lock_SimpleResolveSingleton_1A12D1D0BCCE9EF5 = new();
+    internal tsr_di.test.SimpleResolveSingleton SimpleResolveSingleton_1A12D1D0BCCE9EF5 {get { lock(_lock_SimpleResolveSingleton_1A12D1D0BCCE9EF5) { return _SimpleResolveSingleton_1A12D1D0BCCE9EF5 ??=  new tsr_di.test.SimpleResolveSingleton(); } } }
+
+    // Scoped
+    internal tsr_di.test.SimpleResolveDefaultNamed SimpleResolveDefaultNamed_038AF0CC33F8BF83 {get =>  new tsr_di.test.SimpleResolveDefaultNamed(); }
+```
+
 
 ### `InnerResolve.g.cs`
 
@@ -246,6 +276,21 @@ public static (T1,T2,T3,T4) Resolve<T1,T2,T3,T4>(ServiceKey key1 = ServiceKey.No
 }
 ```
 
+### `ResolveProp.g.cs`
+
+ダイレクトプロパティ解決用の Serviceクラスが実装されます。  
+
+```csharp
+public static class Services {
+    public static partial class tsr_di { public static partial class test { 
+        public static global::tsr_di.test.ISimpleResolveDefault ISimpleResolveDefault =>new FieldStore().SimpleResolveDefault_41A027181B0F898B;
+    }}
+    public static partial class tsr_di { public static partial class test { 
+        public static global::tsr_di.test.ISimpleResolveDefault ISimpleResolveDefault_Def =>new FieldStore().SimpleResolveDefaultNamed_038AF0CC33F8BF83;
+    }}
+    ...
+}
+```
 
 ### `TypedEnum.g.cs`
 

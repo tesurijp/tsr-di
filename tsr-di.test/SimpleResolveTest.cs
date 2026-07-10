@@ -17,6 +17,11 @@ public sealed class SimpleResolveTest
 
         var (s5,s6,s7,s8) = ServiceResolver.Resolve<ISimpleResolveDefault, ISimpleResolveDefault, ISimpleResolveDefault, ISimpleResolveDefault>(ServiceKey.None, ServiceKey.None,ServiceKey.Def, ServiceKey.Def2);
 
+        var s9 = ServiceResolver.Services.tsr_di.test.ISimpleResolveDefault;
+        var s10 = ServiceResolver.Services.tsr_di.test.ISimpleResolveDefault;
+        var s11 = ServiceResolver.Services.tsr_di.test.ISimpleResolveDefault_Def;
+        var s12 = ServiceResolver.Services.tsr_di.test.ISimpleResolveDefault_Def2;
+
         Assert.AreNotSame(s1, s2);
         Assert.IsInstanceOfType<SimpleResolveDefault>(s1);
         Assert.IsInstanceOfType<SimpleResolveDefault>(s2);
@@ -28,6 +33,12 @@ public sealed class SimpleResolveTest
         Assert.IsInstanceOfType<SimpleResolveDefault>(s6);
         Assert.IsInstanceOfType<SimpleResolveDefaultNamed>(s7);
         Assert.IsInstanceOfType<SimpleResolveDefaultNamedAlt>(s8);
+
+        Assert.AreNotSame(s9, s10);
+        Assert.IsInstanceOfType<SimpleResolveDefault>(s9);
+        Assert.IsInstanceOfType<SimpleResolveDefault>(s10);
+        Assert.IsInstanceOfType<SimpleResolveDefaultNamed>(s11);
+        Assert.IsInstanceOfType<SimpleResolveDefaultNamedAlt>(s12);
     }
 
     [TestMethod]
@@ -40,6 +51,11 @@ public sealed class SimpleResolveTest
 
         var (s5,s6,s7,s8) = ServiceResolver.Resolve<ISimpleResolveSingleton, ISimpleResolveSingleton, ISimpleResolveSingleton, ISimpleResolveSingleton>(ServiceKey.None, ServiceKey.None,ServiceKey.Single, ServiceKey.Single2);
 
+        var s9 = ServiceResolver.Services.tsr_di.test.ISimpleResolveSingleton;
+        var s10 = ServiceResolver.Services.tsr_di.test.ISimpleResolveSingleton;
+        var s11 = ServiceResolver.Services.tsr_di.test.ISimpleResolveSingleton_Single;
+        var s12 = ServiceResolver.Services.tsr_di.test.ISimpleResolveSingleton_Single2;
+
         Assert.AreSame(s1, s2);
         Assert.IsInstanceOfType<SimpleResolveSingleton>(s1);
         Assert.IsInstanceOfType<SimpleResolveSingleton>(s2);
@@ -51,6 +67,12 @@ public sealed class SimpleResolveTest
         Assert.IsInstanceOfType<SimpleResolveSingleton>(s6);
         Assert.IsInstanceOfType<SimpleResolveSingletonNamed>(s7);
         Assert.IsInstanceOfType<SimpleResolveSingletonNamedAlt>(s8);
+
+        Assert.AreSame(s9, s10);
+        Assert.IsInstanceOfType<SimpleResolveSingleton>(s9);
+        Assert.IsInstanceOfType<SimpleResolveSingleton>(s10);
+        Assert.IsInstanceOfType<SimpleResolveSingletonNamed>(s11);
+        Assert.IsInstanceOfType<SimpleResolveSingletonNamedAlt>(s12);
     }
 
     [TestMethod]
@@ -61,6 +83,11 @@ public sealed class SimpleResolveTest
         var s3 = ServiceResolver.Resolve<ISimpleResolveTransient>(ServiceKey.Tran);
         var s4 = ServiceResolver.Resolve<ISimpleResolveTransient>(ServiceKey.Tran2);
         var (s5,s6,s7,s8) = ServiceResolver.Resolve<ISimpleResolveTransient, ISimpleResolveTransient, ISimpleResolveTransient, ISimpleResolveTransient>(ServiceKey.None, ServiceKey.None,ServiceKey.Tran, ServiceKey.Tran2);
+
+        var s9 = ServiceResolver.Services.tsr_di.test.ISimpleResolveTransient;
+        var s10 = ServiceResolver.Services.tsr_di.test.ISimpleResolveTransient;
+        var s11 = ServiceResolver.Services.tsr_di.test.ISimpleResolveTransient_Tran;
+        var s12 = ServiceResolver.Services.tsr_di.test.ISimpleResolveTransient_Tran2;
 
         Assert.AreNotSame(s1, s2);
         Assert.IsInstanceOfType<SimpleResolveTransient>(s1);
@@ -73,6 +100,12 @@ public sealed class SimpleResolveTest
         Assert.IsInstanceOfType<SimpleResolveTransient>(s6);
         Assert.IsInstanceOfType<SimpleResolveTransientNamed>(s7);
         Assert.IsInstanceOfType<SimpleResolveTransientNamedAlt>(s8);
+
+        Assert.AreNotSame(s9, s10);
+        Assert.IsInstanceOfType<SimpleResolveTransient>(s9);
+        Assert.IsInstanceOfType<SimpleResolveTransient>(s10);
+        Assert.IsInstanceOfType<SimpleResolveTransientNamed>(s11);
+        Assert.IsInstanceOfType<SimpleResolveTransientNamedAlt>(s12);
     }
 
     [TestMethod]
@@ -85,6 +118,11 @@ public sealed class SimpleResolveTest
 
         var (s5,s6,s7,s8) = ServiceResolver.Resolve<ISimpleResolveScoped, ISimpleResolveScoped, ISimpleResolveScoped, ISimpleResolveScoped>(ServiceKey.None, ServiceKey.None,ServiceKey.Scope, ServiceKey.Scope2);
 
+        var s9 = ServiceResolver.Services.tsr_di.test.ISimpleResolveScoped;
+        var s10 = ServiceResolver.Services.tsr_di.test.ISimpleResolveScoped;
+        var s11 = ServiceResolver.Services.tsr_di.test.ISimpleResolveScoped_Scope;
+        var s12 = ServiceResolver.Services.tsr_di.test.ISimpleResolveScoped_Scope2;
+
         Assert.AreNotSame(s1, s2);
         Assert.IsInstanceOfType<SimpleResolveScoped>(s1);
         Assert.IsInstanceOfType<SimpleResolveScoped>(s2);
@@ -96,6 +134,12 @@ public sealed class SimpleResolveTest
         Assert.IsInstanceOfType<SimpleResolveScoped>(s6);
         Assert.IsInstanceOfType<SimpleResolveScopedNamed>(s7);
         Assert.IsInstanceOfType<SimpleResolveScopedNamedAlt>(s8);
+
+        Assert.AreNotSame(s9, s10);
+        Assert.IsInstanceOfType<SimpleResolveScoped>(s9);
+        Assert.IsInstanceOfType<SimpleResolveScoped>(s10);
+        Assert.IsInstanceOfType<SimpleResolveScopedNamed>(s11);
+        Assert.IsInstanceOfType<SimpleResolveScopedNamedAlt>(s12);
     }
 
     [TestMethod]

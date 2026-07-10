@@ -14,12 +14,20 @@ public sealed class MultiInterfaceTest
     {
         var s1 = ServiceResolver.Resolve<IMultiInterface1>(ServiceKey.Def);
         var s2 = ServiceResolver.Resolve<IMultiInterface2>(ServiceKey.Def);
+        var s3 = ServiceResolver.Services.tsr_di.test.IMultiInterface1_Def;
+        var s4 = ServiceResolver.Services.tsr_di.test.IMultiInterface2_Def;
 
         var as1 = s1 as MultiInterfacDef;
         var as2 = s2 as MultiInterfacDef;
+        var as3 = s3 as MultiInterfacDef;
+        var as4 = s4 as MultiInterfacDef;
         Assert.IsNotNull(as1);
         Assert.IsNotNull(as2);
+        Assert.IsNotNull(as3);
+        Assert.IsNotNull(as4);
         Assert.AreSame(as1, as2);
+        Assert.AreSame(as1, as3);
+        Assert.AreSame(as1, as4);
     }
 
     [TestMethod]
@@ -27,12 +35,20 @@ public sealed class MultiInterfaceTest
     {
         var s1 = ServiceResolver.Resolve<IMultiInterface1>(ServiceKey.Shared);
         var s2 = ServiceResolver.Resolve<IMultiInterface2>(ServiceKey.Shared);
+        var s3 = ServiceResolver.Services.tsr_di.test.IMultiInterface1_Shared;
+        var s4 = ServiceResolver.Services.tsr_di.test.IMultiInterface2_Shared;
 
         var as1 = s1 as MultiInterfaceShared;
         var as2 = s2 as MultiInterfaceShared;
+        var as3 = s3 as MultiInterfaceShared;
+        var as4 = s4 as MultiInterfaceShared;
         Assert.IsNotNull(as1);
         Assert.IsNotNull(as2);
+        Assert.IsNotNull(as3);
+        Assert.IsNotNull(as4);
         Assert.AreSame(as1, as2);
+        Assert.AreSame(as1, as3);
+        Assert.AreSame(as1, as4);
     }
 
     [TestMethod]
@@ -40,12 +56,23 @@ public sealed class MultiInterfaceTest
     {
         var s1 = ServiceResolver.Resolve<IMultiInterface1>(ServiceKey.Isolate);
         var s2 = ServiceResolver.Resolve<IMultiInterface2>(ServiceKey.Isolate);
+        var s3 = ServiceResolver.Services.tsr_di.test.IMultiInterface1_Isolate;
+        var s4 = ServiceResolver.Services.tsr_di.test.IMultiInterface2_Isolate;
 
         var as1 = s1 as MultiInterfaceIsolate;
         var as2 = s2 as MultiInterfaceIsolate;
+        var as3 = s3 as MultiInterfaceIsolate;
+        var as4 = s4 as MultiInterfaceIsolate;
         Assert.IsNotNull(as1);
         Assert.IsNotNull(as2);
+        Assert.IsNotNull(as3);
+        Assert.IsNotNull(as4);
+        Assert.AreSame(as1, as3);
+        Assert.AreSame(as2, as4);
         Assert.AreNotSame(as1, as2);
+        Assert.AreNotSame(as1, as4);
+        Assert.AreNotSame(as2, as3);
+        Assert.AreNotSame(as3, as4);
     }
 
     [TestMethod]
