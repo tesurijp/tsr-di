@@ -15,8 +15,8 @@ namespace {0};
 static partial class {1}
 {{
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
-private partial class InnerResolver : {2}
+private partial class InnerResolver {2} {3} 
 {{
-{3}
+{4}
 }}
 }}

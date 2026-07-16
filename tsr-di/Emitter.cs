@@ -48,7 +48,8 @@ internal static class Emitter
             var lookup = param.resolveItems.ToLookup(i => i.IdentName, i => i);
             var resoleveInterfaces = MakeResolveInterfaces(lookup);
             var resoleveFuncs = MakeResolveFunc(lookup);
-            var resolveCsCode = string.Format(TemplateReader.InnerResolverCS, nmspc, clsnm, string.Join(",", resoleveInterfaces), string.Join("\r\n", resoleveFuncs));
+            var hasInterface = resoleveInterfaces.Any() ? ":" : "";
+            var resolveCsCode = string.Format(TemplateReader.InnerResolverCS, nmspc, clsnm, hasInterface, string.Join(",", resoleveInterfaces), string.Join("\r\n", resoleveFuncs));
             context.AddSource($"InnerResolver.g.cs", resolveCsCode);
         }
     }
