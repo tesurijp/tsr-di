@@ -6,6 +6,7 @@
 #pragma warning disable CS8510
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -18,7 +19,7 @@ static partial class {1}
 private interface IResolver<T>
 {{
     T Resolve( ref ResolveContext store, ServiceKey key);
-    IEnumerable<T> ResolveAll( ref ResolveContext store);
+    ReadOnlyCollection<T> ResolveAll( ref ResolveContext store);
 }}
 
 private partial class InnerResolver;
@@ -33,7 +34,7 @@ public static T Resolve<T>(ServiceKey key = ServiceKey.None)
 }}
 
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
-public static IEnumerable<T> ResolveAll<T>()
+public static ReadOnlyCollection<T> ResolveAll<T>()
 {{
         ResolveContext localStore = default;
         return ((IResolver<T>)inner).ResolveAll(ref localStore);

@@ -123,17 +123,17 @@ internal static class Emitter
             foreach (var i in itemarray.Where(i => i.NeedKeyResolve))
             {
                 var fld = $"ServiceKey.{(i.Key is null ? "None" : i.Key)}";
-                yield return $"            {fld} => ({item.Key})localStore.{i.FieldName},";
+                yield return $"            {fld} => localStore.{i.FieldName},";
             }
             yield return "            _ => throw new UnreachableException()";
             yield return "        };";
             yield return "";
 
-            yield return $"        IEnumerable<{item.Key}> IResolver<{item.Key}>.ResolveAll(ref ResolveContext localStore) => ";
+            yield return $"        ReadOnlyCollection<{item.Key}> IResolver<{item.Key}>.ResolveAll(ref ResolveContext localStore) => ";
             yield return "        [";
             foreach (var i in itemarray)
             {
-                yield return $"            ({item.Key})(localStore.{i.FieldName}),";
+                yield return $"            localStore.{i.FieldName},";
             }
             yield return "        ];";
             yield return "";
@@ -171,7 +171,7 @@ internal static class Emitter
         {
             var typeArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"T{ar}"));
             var retArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"res{ar}"));
-            var typeEnumArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"IEnumerable<T{ar}>"));
+            var typeEnumArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"ReadOnlyCollection<T{ar}>"));
             var keyArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"ServiceKey key{ar} = ServiceKey.None"));
 
             yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
