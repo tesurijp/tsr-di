@@ -152,7 +152,7 @@ internal static class FieldStoreMapper
                 }
                 else
                 {
-                    var nameKey = param.GetAttributes().FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, sset.FromNameAttr))?.ConstructorArguments.FirstOrDefault().Value?.ToString();
+                    var nameKey = param.GetAttributes().FirstOrDefault(a => SymbolCompair(a.AttributeClass, sset.FromNameAttr))?.ConstructorArguments.FirstOrDefault().Value?.ToString();
                     var matches = items.Where(i => i.Key == nameKey).ToArray();
 
                     if (matches.Length == 1)
@@ -178,8 +178,8 @@ internal static class FieldStoreMapper
     }
     private static Location GetParameterFullLocation(IParameterSymbol psymbol) =>
             (psymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as ParameterSyntax)?.GetLocation() ?? psymbol.Locations.FirstOrDefault() ?? Location.None;
-    private static Location GetAttributeFullLocation(ISymbol sym, INamedTypeSymbol attrType) =>
-        sym.GetAttributes().Single(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, attrType))
+    private static Location GetAttributeFullLocation(ISymbol sym, TypeSymbols attrType) =>
+        sym.GetAttributes().Single(a => SymbolCompair(a.AttributeClass, attrType))
             .ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;
     private static bool IsInvalideName(string? value) => value is not null && ! SyntaxFacts.IsValidIdentifier(value);
 

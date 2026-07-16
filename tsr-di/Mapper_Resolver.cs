@@ -68,7 +68,7 @@ internal class ResolverFunctionMapper
         }
     }
 
-    private static IEnumerable<ResultOrError<ResolverItem>> ToResolveItems_Internal(ImmutableArray<ActualResolverFuncInfo> targets, TypeSymbols items, MethodSymbols mitems, INamedTypeSymbol svcResolverAttr, INamedTypeSymbol svcClsAttr, INamedTypeSymbol svcFuncAttr)
+    private static IEnumerable<ResultOrError<ResolverItem>> ToResolveItems_Internal(ImmutableArray<ActualResolverFuncInfo> targets, TypeSymbols items, MethodSymbols mitems, TypeSymbols svcResolverAttr, TypeSymbols svcClsAttr, TypeSymbols svcFuncAttr)
     {
         var lookup = CreateTypeLookup(items, svcClsAttr);
         var lookupMethod = CreateFuncLookup(mitems, svcFuncAttr);
@@ -147,7 +147,7 @@ internal class ResolverPropertyMapper
     internal static IncrementalValueProvider<ImmutableArray<ResolverItem>> ToResolveItems(CollectedTypeSymbols ItemList, CollectedMethodSymbols MethodList, IncrementalValueProvider<SymbolSet> symbols) =>
         ItemList.Combine(MethodList).Combine(symbols).Select((x, _) => ToResolveItems_Internal(x.Left.Left, x.Left.Right, x.Right.SvcClassAttr, x.Right.SvcFuncAttr).ToImmutableArray());
 
-    private static IEnumerable<ResolverItem> ToResolveItems_Internal(TypeSymbols items, MethodSymbols mitems, INamedTypeSymbol svcClsAttr, INamedTypeSymbol svcFuncAttr)
+    private static IEnumerable<ResolverItem> ToResolveItems_Internal(TypeSymbols items, MethodSymbols mitems, TypeSymbols svcClsAttr, TypeSymbols svcFuncAttr)
     {
         var lookup = CreateTypeLookup(items, svcClsAttr);
         var lookupMethod = CreateFuncLookup(mitems, svcFuncAttr);

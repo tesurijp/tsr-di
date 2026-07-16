@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 using System.Linq;
 namespace tsr_di;
 
-internal record class SymbolSet(INamedTypeSymbol SvcResolverAttr, INamedTypeSymbol SvcClassAttr,INamedTypeSymbol SvcFuncAttr, INamedTypeSymbol FromNameAttr, INamedTypeSymbol IEnumerable, INamedTypeSymbol Lazy, INamedTypeSymbol List);
+internal record class SymbolSet(TypeSymbols SvcResolverAttr, TypeSymbols SvcClassAttr,TypeSymbols SvcFuncAttr, TypeSymbols FromNameAttr, INamedTypeSymbol IEnumerable, INamedTypeSymbol Lazy, INamedTypeSymbol List);
 
 internal static class Collector
 {
@@ -18,10 +18,10 @@ internal static class Collector
     private const string GenericList = "System.Collections.Generic.List`1";
 
     internal static IncrementalValueProvider<SymbolSet> ConstSymbols(IncrementalGeneratorInitializationContext context) => context.CompilationProvider.Select((c, _) => new SymbolSet(
-        c.GetTypeByMetadataName(ServiceResolverAttributeName)!,
-        c.GetTypeByMetadataName(ServiceClassAttributeName)!,
-        c.GetTypeByMetadataName(ServiceFunctionAttributeName)!,
-        c.GetTypeByMetadataName(NamedAttribute)!,
+        c.GetTypesByMetadataName(ServiceResolverAttributeName)!,
+        c.GetTypesByMetadataName(ServiceClassAttributeName)!,
+        c.GetTypesByMetadataName(ServiceFunctionAttributeName)!,
+        c.GetTypesByMetadataName(NamedAttribute)!,
         c.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T),
         c.GetTypeByMetadataName(SystemLazy)!,
         c.GetTypeByMetadataName(GenericList)!
@@ -68,7 +68,7 @@ internal static class Collector
     static readonly string[] sysArray = ["mscorlib", "System", "netstandard", "Accessibility", "WindowsBase"];
     private static IEnumerable<T> EnumerateAll<T>(Compilation c, Func<INamedTypeSymbol, IEnumerable<T>> getFunc, string attribute) where T : ISymbol
     {
-        var regAttr = c.GetTypeByMetadataName(attribute)!;
+        var regAttr = c.GetTypesByMetadataName(attribute)!;
 
         foreach (var assembly in c.SourceModule.ReferencedAssemblySymbols)
         {
@@ -113,8 +113,8 @@ internal static class Collector
             }
         }
     }
-    internal static bool HasAttribute(ISymbol tp, INamedTypeSymbol regAttr) =>
-            tp.GetAttributes().Any(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, regAttr));
+    internal static bool HasAttribute(ISymbol tp, TypeSymbols regAttr) =>
+            tp.GetAttributes().Any(a => MapperUtil.SymbolCompair(a.AttributeClass, regAttr));
 
     private static bool PreCheckResolveFunction(InvocationExpressionSyntax node) =>
         node.Expression is MemberAccessExpressionSyntax { Name.Identifier.Text: "Resolve" } ||

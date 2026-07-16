@@ -11,7 +11,7 @@ namespace tsr_di;
 internal class MapperUtil
 {
     internal static string DelegateName(INamedTypeSymbol? tp, string? typename, IMethodSymbol item) => tp?.ToString() ?? $"I{typename ?? item.Name}";
-    internal static TypeLookup CreateTypeLookup(TypeSymbols items, INamedTypeSymbol regAttr)
+    internal static TypeLookup CreateTypeLookup(TypeSymbols items, TypeSymbols regAttr)
     {
 
         bool IsSystemInterface(string name) => name.StartsWith("System.") || name.StartsWith("Microsoft.") || name.StartsWith("FSharp.");
@@ -25,12 +25,12 @@ internal class MapperUtil
             .ToLookup(i => i.iftp, i => (tp: i.item, tag: _GetTag(i.item)), SymbolEqualityComparer.Default);
     }
 
-    private static (string iftp, string? tag) GetInterfaceName(IMethodSymbol tp, INamedTypeSymbol regAttr)
+    private static (string iftp, string? tag) GetInterfaceName(IMethodSymbol tp, TypeSymbols regAttr)
     {
         var (type, name, key) = GetServiceFunctionAttribute(regAttr, tp);
         return (DelegateName(type, name, tp), key);
     }
-    internal static FuncLookup CreateFuncLookup(MethodSymbols items, INamedTypeSymbol regAttr) =>
+    internal static FuncLookup CreateFuncLookup(MethodSymbols items, TypeSymbols regAttr) =>
         items.Select(i => (tag: GetInterfaceName(i, regAttr), item: i)).ToLookup(i => i.tag.iftp, i => (i.item, i.tag.tag));
 
     private static readonly SHA256 sha256 = SHA256.Create();
@@ -88,17 +88,17 @@ internal class MapperUtil
         }
     }
 
-    internal static (string?, LifeTime lifetime, SharingMode shared) GetServiceClassAttribute(INamedTypeSymbol regClassAttr, INamedTypeSymbol tp)
+    internal static (string?, LifeTime lifetime, SharingMode shared) GetServiceClassAttribute(TypeSymbols regClassAttr, INamedTypeSymbol tp)
     {
-        var attr = tp.GetAttributes().Single(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, regClassAttr));
+        var attr = tp.GetAttributes().Single(a => SymbolCompair(a.AttributeClass, regClassAttr));
         var lifetime = GetAttributeParamValue(LifeTime.Transient, "LifeTime", attr.NamedArguments);
         var shared = GetAttributeParamValue(SharingMode.Shared, "SharingMode", attr.NamedArguments);
         var name = GetAttributeParamValue((string?)null, "Name", attr.NamedArguments);
         return (name, lifetime, shared);
     }
-    internal static (INamedTypeSymbol ? type, string? serviceName, string? name) GetServiceFunctionAttribute(INamedTypeSymbol regClassAttr, IMethodSymbol tp)
+    internal static (INamedTypeSymbol ? type, string? serviceName, string? name) GetServiceFunctionAttribute(TypeSymbols regClassAttr, IMethodSymbol tp)
     {
-        var attr = tp.GetAttributes().Single(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, regClassAttr));
+        var attr = tp.GetAttributes().Single(a => SymbolCompair(a.AttributeClass, regClassAttr));
         var type = GetAttributeParamValue((INamedTypeSymbol?)null, "ServiceType", attr.NamedArguments);
         var servicename = GetAttributeParamValue((string?)null, "ServiceName", attr.NamedArguments);
         var name = GetAttributeParamValue((string?)null, "Name", attr.NamedArguments);
@@ -107,5 +107,7 @@ internal class MapperUtil
     private static T GetAttributeParamValue<T>(T defaultValue, string keyField, ImmutableArray<KeyValuePair<string, TypedConstant>> args) =>
             (args.FirstOrDefault(a => a.Key == keyField).Value.Value is object value) ? (T)value : defaultValue;
     internal static (string retType, IEnumerable<string> args) GetSignature(IMethodSymbol method) => (method.ReturnType.ToString(), method.Parameters.Select(t => t.Type.ToString()));
-}
 
+    internal static bool SymbolCompair(ISymbol? s1, TypeSymbols symbols) => symbols.Any(i => SymbolEqualityComparer.Default.Equals(s1, i));
+
+}
