@@ -11,7 +11,7 @@ namespace {0};
 static partial class {1}
 {{
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
-private class FieldStore {{
+private struct ResolveContext {{
 {2}
 }}
 }}

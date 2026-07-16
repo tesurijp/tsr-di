@@ -25,8 +25,8 @@ internal static class Emitter
         {
             var (nmspc, clsnm) = param.ident.First();
             var fieldsLine = MakeFieldsLines(param.fieldItems);
-            var storeCsCode = string.Format(TemplateReader.FieldStoreCS, nmspc, clsnm, string.Join("\r\n", fieldsLine));
-            context.AddSource($"InnerFieldStore.g.cs", storeCsCode);
+            var storeCsCode = string.Format(TemplateReader.ResolverContextCS, nmspc, clsnm, string.Join("\r\n", fieldsLine));
+            context.AddSource($"InnerResolveContext.g.cs", storeCsCode);
         }
     }
     internal static void WriteTypedEnum(SourceProductionContext context, (ImmutableArray<(string nmspc, string clsnm)> ident, ImmutableArray<ResolverItem> resolveItems) param)
@@ -119,7 +119,7 @@ internal static class Emitter
         foreach (var item in lookup)
         {
             var itemarray = item.ToArray();
-            yield return $"        {item.Key} IResolver<{item.Key}>.Resolve(FieldStore localStore, ServiceKey key) => key switch {{";
+            yield return $"        {item.Key} IResolver<{item.Key}>.Resolve(ref ResolveContext localStore, ServiceKey key) => key switch {{";
             foreach (var i in itemarray.Where(i => i.NeedKeyResolve))
             {
                 var fld = $"ServiceKey.{(i.Key is null ? "None" : i.Key)}";
@@ -129,7 +129,7 @@ internal static class Emitter
             yield return "        };";
             yield return "";
 
-            yield return $"        IEnumerable<{item.Key}> IResolver<{item.Key}>.ResolveAll(FieldStore localStore) => ";
+            yield return $"        IEnumerable<{item.Key}> IResolver<{item.Key}>.ResolveAll(ref ResolveContext localStore) => ";
             yield return "        [";
             foreach (var i in itemarray)
             {
@@ -161,7 +161,7 @@ internal static class Emitter
             var NamedOpt = i.Key is null ? "" : $"_{i.Key}";
             var FldName = Regex.Replace(cls, @"[,\s<>]", "_");
             yield return pre.ToString();
-            yield return $"public static {(splitName.Length > 1 ? "global::" : "")}{i.IdentName} {FldName}{NamedOpt} =>new FieldStore().{i.FieldName};";
+            yield return $"public static {(splitName.Length > 1 ? "global::" : "")}{i.IdentName} {FldName}{NamedOpt} =>new ResolveContext().{i.FieldName};";
             yield return post.ToString();
         }
     }
@@ -176,20 +176,20 @@ internal static class Emitter
 
             yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
             yield return $"public static ({typeArgs}) Resolve<{typeArgs}>({keyArgs}) {{";
-            yield return "    var localStore = new FieldStore();";
+            yield return "    ResolveContext localStore = default;";
             for (var num = 1; num <= i; num++)
             {
-                yield return $"    var res{num} = ((IResolver<T{num}>)inner).Resolve(localStore, key{num});";
+                yield return $"    var res{num} = ((IResolver<T{num}>)inner).Resolve(ref localStore, key{num});";
             }
             yield return $"    return ({retArgs});";
             yield return "}";
 
             yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
             yield return $"public static ({typeEnumArgs}) ResolveAll<{typeArgs}>() {{";
-            yield return "    var localStore = new FieldStore();";
+            yield return "    ResolveContext localStore = default;";
             for (var num = 1; num <= i; num++)
             {
-                yield return $"    var res{num} = ((IResolver<T{num}>)inner).ResolveAll(localStore);";
+                yield return $"    var res{num} = ((IResolver<T{num}>)inner).ResolveAll(ref localStore);";
             }
             yield return $"    return ({retArgs});";
             yield return "}";

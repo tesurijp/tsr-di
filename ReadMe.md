@@ -212,11 +212,11 @@ tsr-di は主に以下のファイルを生成します
 複数プロジェクトで利用する場合は、属性クラスの定義を共通化する必要があるため、各プロジェクトから `tsr-di.Attribute` プロジェクト（またはパッケージ）を参照します。  
 その場合、生成された本ファイル内の属性定義は無効になります。単一プロジェクトで他のプロジェクトのサービスを検索する必要がない場合は、`tsr-di.Attribute` を追加参照することなく、自動生成される本ファイル内の属性をそのまま利用できます。
 
-### `InnerFieldStore.g.cs`
+### `InnerResolveContext.g.cs`
 
-`FieldStore` クラスが定義され、その中に登録されたクラスサービスや関数 delegate を管理するプロパティが作成されます。  
+`ResolveContext` 構造体が定義され、その中に登録されたクラスサービスや関数 delegate を管理するプロパティが作成されます。  
 ライフタイムの違いはプロパティの内部実装で吸収されるため、利用側はライフタイムの違いを意識する必要がありません。  
-`FieldStore` は `Resolve<T>()` / `ResolveAll<T>()` のメソッド内ローカル変数としてインスタンス化されるため、ローカル変数のスコープと DI のスコープが一致します。  
+`ResolveContext` は `Resolve<T>()` / `ResolveAll<T>()` のメソッド内ローカル変数であるため、ローカル変数のスコープと DI のスコープが一致します。  
 
 - `Singleton`: `static readonly object` フィールドに実体が保持され、アプリケーション全体で共有されます。
 - `Scoped`: インスタンスプロパティの `field` に保持され、同一スコープ内で再度参照された場合は同じインスタンスが再利用されます。
@@ -225,7 +225,7 @@ tsr-di は主に以下のファイルを生成します
 また `SharingMode` の指定内容によって、インスタンスを保持するプロパティがサービスごとに分割されるか、あるいは共通化されるかが変わります。
 
 ```csharp
-private class FieldStore {
+private struct ResolveContext {
     // Transient
     internal tsr_di.test.SimpleResolveDefault SimpleResolveDefault_41A027181B0F898B {get =>  new tsr_di.test.SimpleResolveDefault(); }
 
@@ -242,7 +242,7 @@ private class FieldStore {
 ### `InnerResolve.g.cs`
 
 参照されている全ての T 型と対応する`IResolver<T>.Resolve()` および、`IResolver<T>.ResolveAll()` を実装します。  
-引数として `FieldStore` をインスタンスを受けとり、ServiceKeyの switchで `FieldStore` のどのフィールドを指定するか選択します。  
+引数として `ResolveContext` をインスタンスを受けとり、ServiceKeyの switchで `ResolveContext` のどのフィールドを指定するか選択します。  
 
 実装される型はコード上で `Resolve<T>()` や `ResolveAll<T>()` の型引数として使用されている型 `T` のみに限定しており、登録しても`Resolve`の型引数として 利用していないインターフェースの判定処理は出力されません。
 このため `[ServiceClass]` や `[ServiceFunction]` 属性を付与していても実際にはコード上で解決要求のないサービスは、インターフェースへの参照が到達されることのないクラスや関数となり、Native AOT 等によるトリムの対象になりやすくなります。  
@@ -250,24 +250,27 @@ private class FieldStore {
 ### `Resolve.g.cs`
 
 `Resolve<T>` および `ResolveAll<T>` 、`Resolve<T1,T2...>()` などを実装します。  
-各メソッドの先頭で、ローカル変数として `FieldStore` をインスタンス化し、`InnerResolve` に実装された `IResolver<T>` の各メソッドを呼び出します。  
-(ローカル変数 `FieldStore` の寿命と DI としてのスコープが一致するため、スコープ管理専用のコードはありませんが、常に `FieldStore`のインスタンスが作成されるため、そこがネックになる可能性があります。)  
+各メソッドの先頭で、ローカル変数として `ResolveContext` をインスタンス化し、`InnerResolve` に実装された `IResolver<T>` の各メソッドを呼び出します。  
+(ローカル変数 `ResolveContext` の寿命と DI としてのスコープが一致するため、スコープ管理専用のコードはありませんが、常に `ResolveContext`のインスタンスが作成されるため、そこがネックになる可能性があります。)  
 `Resolve.g.cs` には型依存せず、型引数の数にのみ依存した実装が出力されます。
 
 
 ```csharp
 
-public static T Resolve<T>(ServiceKey  key= ServiceKey.None) => ((IResolver<T>)inner).Resolve(new FieldStore(), key);
+public static T Resolve<T>(ServiceKey  key= ServiceKey.None) {
+    var localStore = new ResolveContext();
+    return ((IResolver<T>)inner).Resolve(localStore , key);
+}
 
 public static (T1,T2) Resolve<T1,T2>(ServiceKey key1 = ServiceKey.None,ServiceKey key2 = ServiceKey.None) {
-    var localStore = new FieldStore();
+    var localStore = new ResolveContext();
     var res1 = ((IResolver<T1>)inner).Resolve(localStore, key1);
     var res2 = ((IResolver<T2>)inner).Resolve(localStore, key2);
     return (res1,res2);
 }
 
 public static (T1,T2,T3,T4) Resolve<T1,T2,T3,T4>(ServiceKey key1 = ServiceKey.None,ServiceKey key2 = ServiceKey.None,ServiceKey key3 = ServiceKey.None,ServiceKey key4 = ServiceKey.None) {
-    var localStore = new FieldStore();
+    var localStore = new ResolveContext();
     var res1 = ((IResolver<T1>)inner).Resolve(localStore, key1);
     var res2 = ((IResolver<T2>)inner).Resolve(localStore, key2);
     var res3 = ((IResolver<T3>)inner).Resolve(localStore, key3);
@@ -283,10 +286,10 @@ public static (T1,T2,T3,T4) Resolve<T1,T2,T3,T4>(ServiceKey key1 = ServiceKey.No
 ```csharp
 public static class Services {
     public static partial class tsr_di { public static partial class test { 
-        public static global::tsr_di.test.ISimpleResolveDefault ISimpleResolveDefault =>new FieldStore().SimpleResolveDefault_41A027181B0F898B;
+        public static global::tsr_di.test.ISimpleResolveDefault ISimpleResolveDefault =>new ResolveContext().SimpleResolveDefault_41A027181B0F898B;
     }}
     public static partial class tsr_di { public static partial class test { 
-        public static global::tsr_di.test.ISimpleResolveDefault ISimpleResolveDefault_Def =>new FieldStore().SimpleResolveDefaultNamed_038AF0CC33F8BF83;
+        public static global::tsr_di.test.ISimpleResolveDefault ISimpleResolveDefault_Def =>new ResolveContext().SimpleResolveDefaultNamed_038AF0CC33F8BF83;
     }}
     ...
 }

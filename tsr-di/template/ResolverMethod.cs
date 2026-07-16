@@ -17,8 +17,8 @@ static partial class {1}
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
 private interface IResolver<T>
 {{
-    T Resolve( FieldStore store, ServiceKey key);
-    IEnumerable<T> ResolveAll(FieldStore store);
+    T Resolve( ref ResolveContext store, ServiceKey key);
+    IEnumerable<T> ResolveAll( ref ResolveContext store);
 }}
 
 private partial class InnerResolver;
@@ -26,10 +26,18 @@ private partial class InnerResolver;
 static readonly InnerResolver inner = new ();
 
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
-public static T Resolve<T>(ServiceKey  key= ServiceKey.None) => ((IResolver<T>)inner).Resolve(new FieldStore(), key);
+public static T Resolve<T>(ServiceKey key = ServiceKey.None)
+{{
+        ResolveContext localStore = default;
+        return ((IResolver<T>)inner).Resolve(ref localStore, key);
+}}
 
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
-public static IEnumerable<T> ResolveAll<T>() => ((IResolver<T>)inner).ResolveAll(new FieldStore());
+public static IEnumerable<T> ResolveAll<T>()
+{{
+        ResolveContext localStore = default;
+        return ((IResolver<T>)inner).ResolveAll(ref localStore);
+}}
 
 {2}
 
