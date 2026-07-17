@@ -6,14 +6,16 @@ using System.Collections.Immutable;
 using System.Linq;
 namespace tsr_di;
 
-internal record class SymbolSet(TypeSymbols SvcResolverAttr, TypeSymbols SvcClassAttr,TypeSymbols SvcFuncAttr, TypeSymbols FromNameAttr, INamedTypeSymbol IEnumerable, INamedTypeSymbol Lazy, INamedTypeSymbol List);
+internal record class SymbolSet(TypeSymbols SvcResolverAttr, TypeSymbols SvcClassAttr,TypeSymbols SvcFuncAttr, TypeSymbols FromNameAttr, TypeSymbols NewScopeAttr, INamedTypeSymbol IEnumerable, INamedTypeSymbol Lazy, INamedTypeSymbol List);
 
 internal static class Collector
 {
-    private const string ServiceResolverAttributeName = "tsr_di.ServiceResolverAttribute";
-    private const string ServiceClassAttributeName = "tsr_di.ServiceClassAttribute";
-    private const string ServiceFunctionAttributeName = "tsr_di.ServiceFunctionAttribute";
-    private const string NamedAttribute = "tsr_di.FromNamedAttribute";
+
+    private const string ServiceResolverAttributeName = $"{nameof(tsr_di)}.{nameof(ServiceResolverAttribute)}";
+    private const string ServiceClassAttributeName = $"{nameof(tsr_di)}.{nameof(ServiceClassAttribute)}";
+    private const string ServiceFunctionAttributeName = $"{nameof(tsr_di)}.{nameof(ServiceFunctionAttribute)}";
+    private const string NamedAttribute = $"{nameof(tsr_di)}.{nameof(FromNamedAttribute)}";
+    private const string NewScopeAttribute = $"{nameof(tsr_di)}.{nameof(FromNewScopeAttribute)}";
     private const string SystemLazy = "System.Lazy`1";
     private const string GenericList = "System.Collections.Generic.List`1";
 
@@ -22,6 +24,7 @@ internal static class Collector
         c.GetTypesByMetadataName(ServiceClassAttributeName)!,
         c.GetTypesByMetadataName(ServiceFunctionAttributeName)!,
         c.GetTypesByMetadataName(NamedAttribute)!,
+        c.GetTypesByMetadataName(NewScopeAttribute)!,
         c.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T),
         c.GetTypeByMetadataName(SystemLazy)!,
         c.GetTypeByMetadataName(GenericList)!

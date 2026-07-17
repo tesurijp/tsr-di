@@ -5,6 +5,7 @@
 #pragma warning disable CA1822
 #pragma warning disable CS8625
 using System;
+using System.Collections.ObjectModel;
 using System.Threading;
 using {0}.AutoDefined;
 namespace {0};
@@ -13,6 +14,7 @@ static partial class {1}
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
 private struct ResolveContext {{
 
+    private static ReadOnlyCollection<T> ResolveAll<T>() => {1}.ResolveAll<T>();
     private partial struct StaticContext;
     private static readonly Lock StaticLock = new();
     private partial class ScopedContext;

@@ -1,4 +1,6 @@
-﻿namespace tsr_di.test;
+﻿using System.Collections.Generic;
+
+namespace tsr_di.test;
 
 public interface ISimpleResolveSingleton;
 public interface ISimpleResolveTransient;
@@ -36,3 +38,14 @@ public interface IMultiInterface2;
 [ServiceClass(Name="Shared", SharingMode = SharingMode.Shared, Lifetime =Lifetime.Singleton)] public class MultiInterfaceShared : IMultiInterface1, IMultiInterface2;
 [ServiceClass(Name="Isolate", SharingMode = SharingMode.IsolatedPerService, Lifetime =Lifetime.Singleton)] public class MultiInterfaceIsolate: IMultiInterface1, IMultiInterface2;
 
+public interface INestedNamedSingleton;
+public interface INestedNamedScoped;
+public interface INestedNamedTransient;
+
+[ServiceClass(Lifetime = Lifetime.Singleton)] public record class NestedNamedSingleton([FromNamed("Single")]ISimpleResolveSingleton S1, [FromNamed("Single")]ISimpleResolveSingleton S2, [FromNamed("Single")] [FromNewScope] ISimpleResolveSingleton S3) : INestedNamedSingleton;
+[ServiceClass(Lifetime = Lifetime.Scoped)] public record class NestedNamedScoped([FromNamed("Scope")]ISimpleResolveScoped S1, [FromNamed("Scope")]ISimpleResolveScoped S2, [FromNamed("Scope")] [FromNewScope] ISimpleResolveScoped S3) : INestedNamedScoped;
+[ServiceClass(Lifetime = Lifetime.Transient)] public record class NestedNamedTransient([FromNamed("Tran")]ISimpleResolveTransient S1, [FromNamed("Tran")]ISimpleResolveTransient S2, [FromNamed("Tran")] [FromNewScope] ISimpleResolveTransient S3) : INestedNamedTransient;
+
+[ServiceClass(Lifetime = Lifetime.Singleton,Name ="Array")] public record class NestedNoNamedSingletonArray(List<ISimpleResolveSingleton> S1, List<ISimpleResolveSingleton> S2, [FromNewScope]List<ISimpleResolveSingleton> S3 ) : INestedNamedSingleton;
+[ServiceClass(Lifetime = Lifetime.Scoped,Name ="Array")] public record class NestedNoNamedScopedArray(List<ISimpleResolveScoped> S1, List<ISimpleResolveScoped> S2, [FromNewScope]List<ISimpleResolveScoped> S3) : INestedNamedScoped;
+[ServiceClass(Lifetime = Lifetime.Transient, Name ="Array")] public record class NestedNoNamedTransientArray(List<ISimpleResolveTransient> S1, List<ISimpleResolveTransient> S2, [FromNewScope]List<ISimpleResolveTransient> S3) : INestedNamedTransient;

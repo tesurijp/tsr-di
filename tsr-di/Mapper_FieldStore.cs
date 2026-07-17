@@ -137,12 +137,20 @@ internal static class FieldStoreMapper
                 }
 
                 var items = ToResolveItem(type, lookup, funcLookup).ToArray();
+                var scope = param.GetAttributes().Any(a => SymbolCompair(a.AttributeClass, sset.NewScopeAttr)) ? "default(ResolveContext)." : "";
 
                 if (isCollection)
                 {
                     if (items.Length > 0)
                     {
-                        yield return $"[{string.Join(",", items.Select(i => $"{i.FieldName}"))}]";
+                        if (scope.Length > 0)
+                        {
+                            yield return $"[ .. ResolveAll<{type}>() ]";
+                        }
+                        else
+                        {
+                            yield return $"[{string.Join(",", items.Select(i => $"{i.FieldName}"))}]";
+                        }
                     }
                     else
                     {
@@ -159,11 +167,11 @@ internal static class FieldStoreMapper
                     {
                         if (isLazy)
                         {
-                            yield return $"new (() => {matches[0].FieldName})";
+                            yield return $"new (() => {scope}{matches[0].FieldName})";
                         }
                         else
                         {
-                            yield return $"{matches[0].FieldName}";
+                            yield return $"{scope}{matches[0].FieldName}";
                         }
                     }
                     else
