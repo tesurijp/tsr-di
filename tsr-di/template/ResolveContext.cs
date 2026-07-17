@@ -12,6 +12,12 @@ static partial class {1}
 {{
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
 private struct ResolveContext {{
+
+    private partial struct StaticContext;
+    private static readonly Lock StaticLock = new();
+    private partial class ScopedContext;
+    private ScopedContext Scoped => field ??= new();
+
 {2}
 }}
 }}

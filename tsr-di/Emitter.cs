@@ -92,22 +92,21 @@ internal static class Emitter
     {
         foreach (var item in items)
         {
-            var getterFrom = item.LifeTime switch
+            switch (item.LifeTime)
             {
-                LifeTime.Singleton => $"_{item.FieldName} ??= ",
-                LifeTime.Scoped => $"field ??= ",
-                LifeTime.Transient => "",
-                _ => throw new System.InvalidOperationException($"Unknown lifetime: {item.LifeTime}")
-            };
-            if (LifeTime.Singleton == item.LifeTime)
-            {
-                yield return $"    private static {item.TypeName}? _{item.FieldName};";
-                yield return $"    private static Lock _lock_{item.FieldName} = new();";
-                yield return $"    internal {item.TypeName} {item.FieldName} {{get {{ lock(_lock_{item.FieldName}) {{ return {getterFrom} {item.InitializeString}; }} }} }}";
-            }
-            else
-            {
-                yield return $"    internal {item.TypeName} {item.FieldName} {{get => {getterFrom} {item.InitializeString}; }}";
+                case LifeTime.Singleton:
+                    yield return $"    partial struct StaticContext {{  internal static {item.TypeName}? {item.FieldName}; }}";
+                    yield return $"    internal {item.TypeName} {item.FieldName} {{get {{ lock(StaticLock) {{ return StaticContext.{item.FieldName} ??= {item.InitializeString}; }} }} }}";
+                    break;
+                case LifeTime.Scoped:
+                    yield return $"    partial class ScopedContext {{  internal {item.TypeName}? {item.FieldName}; }}";
+                    yield return $"    internal {item.TypeName} {item.FieldName} => Scoped.{item.FieldName} ??= {item.InitializeString};";
+                    break;
+                case LifeTime.Transient:
+                    yield return $"    internal {item.TypeName} {item.FieldName} => {item.InitializeString};";
+                    break;
+                default:
+                    throw new System.InvalidOperationException($"Unknown lifetime: {item.LifeTime}");
             }
         }
     }
@@ -161,7 +160,7 @@ internal static class Emitter
             var NamedOpt = i.Key is null ? "" : $"_{i.Key}";
             var FldName = Regex.Replace(cls, @"[,\s<>]", "_");
             yield return pre.ToString();
-            yield return $"public static {(splitName.Length > 1 ? "global::" : "")}{i.IdentName} {FldName}{NamedOpt} =>new ResolveContext().{i.FieldName};";
+            yield return $"public static {(splitName.Length > 1 ? "global::" : "")}{i.IdentName} {FldName}{NamedOpt} =>default(ResolveContext).{i.FieldName};";
             yield return post.ToString();
         }
     }
