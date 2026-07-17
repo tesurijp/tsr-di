@@ -6,6 +6,7 @@
 #pragma warning disable CS8625
 using System;
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using {0}.AutoDefined;
 namespace {0};
@@ -14,6 +15,8 @@ static partial class {1}
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
 private struct ResolveContext {{
 
+    [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ReadOnlyCollection<T> ResolveAll<T>() => {1}.ResolveAll<T>();
     private partial struct StaticContext;
     private static readonly Lock StaticLock = new();

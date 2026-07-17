@@ -118,7 +118,9 @@ internal static class Emitter
         foreach (var item in lookup)
         {
             var itemarray = item.ToArray();
-            yield return $"        {item.Key} IResolver<{item.Key}>.Resolve(ref ResolveContext localStore, ServiceKey key) => key switch {{";
+            yield return "        [System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
+            yield return "        [MethodImpl(MethodImplOptions.AggressiveInlining)]";
+            yield return $"       {item.Key} IResolver<{item.Key}>.Resolve(ref ResolveContext localStore, ServiceKey key) => key switch {{";
             foreach (var i in itemarray.Where(i => i.NeedKeyResolve))
             {
                 var fld = $"ServiceKey.{(i.Key is null ? "None" : i.Key)}";
@@ -128,7 +130,9 @@ internal static class Emitter
             yield return "        };";
             yield return "";
 
-            yield return $"        ReadOnlyCollection<{item.Key}> IResolver<{item.Key}>.ResolveAll(ref ResolveContext localStore) => ";
+            yield return "        [System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
+            yield return "        [MethodImpl(MethodImplOptions.AggressiveInlining)]";
+            yield return $"       ReadOnlyCollection<{item.Key}> IResolver<{item.Key}>.ResolveAll(ref ResolveContext localStore) => ";
             yield return "        [";
             foreach (var i in itemarray)
             {
@@ -174,6 +178,7 @@ internal static class Emitter
             var keyArgs = string.Join(",", Enumerable.Range(1, i).Select(ar => $"ServiceKey key{ar} = ServiceKey.None"));
 
             yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
+            yield return "[MethodImpl(MethodImplOptions.AggressiveInlining)]";
             yield return $"public static ({typeArgs}) Resolve<{typeArgs}>({keyArgs}) {{";
             yield return "    ResolveContext localStore = default;";
             for (var num = 1; num <= i; num++)
@@ -184,6 +189,7 @@ internal static class Emitter
             yield return "}";
 
             yield return "[System.CodeDom.Compiler.GeneratedCode(\"tsr-d\", null)]";
+            yield return "[MethodImpl(MethodImplOptions.AggressiveInlining)]";
             yield return $"public static ({typeEnumArgs}) ResolveAll<{typeArgs}>() {{";
             yield return "    ResolveContext localStore = default;";
             for (var num = 1; num <= i; num++)

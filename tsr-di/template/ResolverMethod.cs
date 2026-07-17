@@ -27,6 +27,7 @@ private partial class InnerResolver;
 static readonly InnerResolver inner = new ();
 
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
+[MethodImpl(MethodImplOptions.AggressiveInlining)]
 public static T Resolve<T>(ServiceKey key = ServiceKey.None)
 {{
         ResolveContext localStore = default;
@@ -34,6 +35,7 @@ public static T Resolve<T>(ServiceKey key = ServiceKey.None)
 }}
 
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)]
+[MethodImpl(MethodImplOptions.AggressiveInlining)]
 public static ReadOnlyCollection<T> ResolveAll<T>()
 {{
         ResolveContext localStore = default;
