@@ -41,7 +41,7 @@ internal static class FieldStoreMapper
                 yield return err.Error!;
             }
             ImmutableArray<string> args = [.. errorOrArgs.Where(i => !i.HasError).Select(i => i.Result!)];
-            if (shared == SharingMode.IsolatePerService)
+            if (shared == SharingMode.IsolatedPerService)
             {
                 foreach (var intf in item.AllInterfaces)
                 {
@@ -88,13 +88,13 @@ internal static class FieldStoreMapper
             }
             else if (item.IsStatic)
             {
-                yield return new FieldItem(delName, ToTidyName(item), LifeTime.Transient, $"{parentCls}.{item.Name}");
+                yield return new FieldItem(delName, ToTidyName(item), Lifetime.Transient, $"{parentCls}.{item.Name}");
             }
             else if (Collector.HasAttribute(parentCls, sset.SvcClassAttr))
             {
                 if (GetServiceClassAttribute(sset.SvcClassAttr, parentCls) is { shared: SharingMode.Shared })
                 {
-                    yield return new FieldItem(delName, ToTidyName(item), LifeTime.Transient, $"{ToTidyName(parentCls)}.{item.Name}");
+                    yield return new FieldItem(delName, ToTidyName(item), Lifetime.Transient, $"{ToTidyName(parentCls)}.{item.Name}");
                 }
                 else
                 {

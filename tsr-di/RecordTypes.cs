@@ -7,7 +7,7 @@ internal record class ResolverItem(string IdentName, string? Key, string FieldNa
 {
     internal bool NeedKeyResolve { get; set; } = true;
 }
-internal record class FieldItem(string TypeName , string FieldName, LifeTime LifeTime, string InitializeString);
+internal record class FieldItem(string TypeName , string FieldName, Lifetime Lifetime, string InitializeString);
 internal record class DelegateItem(string ReturnType, string Name, ImmutableArray<string> ArgList, bool Create = true)
 {
     public bool AreSameSigunature(DelegateItem other) => ReturnType == other.ReturnType && StructuralComparisons.StructuralEqualityComparer.Equals(ArgList, other.ArgList);

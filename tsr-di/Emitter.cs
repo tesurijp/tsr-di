@@ -92,21 +92,21 @@ internal static class Emitter
     {
         foreach (var item in items)
         {
-            switch (item.LifeTime)
+            switch (item.Lifetime)
             {
-                case LifeTime.Singleton:
+                case Lifetime.Singleton:
                     yield return $"    partial struct StaticContext {{  internal static {item.TypeName}? {item.FieldName}; }}";
                     yield return $"    internal {item.TypeName} {item.FieldName} {{get {{ lock(StaticLock) {{ return StaticContext.{item.FieldName} ??= {item.InitializeString}; }} }} }}";
                     break;
-                case LifeTime.Scoped:
+                case Lifetime.Scoped:
                     yield return $"    partial class ScopedContext {{  internal {item.TypeName}? {item.FieldName}; }}";
                     yield return $"    internal {item.TypeName} {item.FieldName} => Scoped.{item.FieldName} ??= {item.InitializeString};";
                     break;
-                case LifeTime.Transient:
+                case Lifetime.Transient:
                     yield return $"    internal {item.TypeName} {item.FieldName} => {item.InitializeString};";
                     break;
                 default:
-                    throw new System.InvalidOperationException($"Unknown lifetime: {item.LifeTime}");
+                    throw new System.InvalidOperationException($"Unknown lifetime: {item.Lifetime}");
             }
         }
     }

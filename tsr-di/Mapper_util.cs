@@ -76,7 +76,7 @@ internal class MapperUtil
         {
             foreach (var (tp, tag) in candidate)
             {
-                if (tag.mode == SharingMode.IsolatePerService)
+                if (tag.mode == SharingMode.IsolatedPerService)
                 {
                     yield return new(target.ToString(), tag.name, $"{ToTidyName(target)}_{ToTidyName(tp)}");
                 }
@@ -88,10 +88,10 @@ internal class MapperUtil
         }
     }
 
-    internal static (string?, LifeTime lifetime, SharingMode shared) GetServiceClassAttribute(TypeSymbols regClassAttr, INamedTypeSymbol tp)
+    internal static (string?, Lifetime lifetime, SharingMode shared) GetServiceClassAttribute(TypeSymbols regClassAttr, INamedTypeSymbol tp)
     {
         var attr = tp.GetAttributes().Single(a => SymbolCompair(a.AttributeClass, regClassAttr));
-        var lifetime = GetAttributeParamValue(LifeTime.Transient, "LifeTime", attr.NamedArguments);
+        var lifetime = GetAttributeParamValue(Lifetime.Transient, "Lifetime", attr.NamedArguments);
         var shared = GetAttributeParamValue(SharingMode.Shared, "SharingMode", attr.NamedArguments);
         var name = GetAttributeParamValue((string?)null, "Name", attr.NamedArguments);
         return (name, lifetime, shared);

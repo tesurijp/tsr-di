@@ -8,17 +8,21 @@ namespace tsr_di;
 public partial class ServiceResolverAttribute;
 public partial class ServiceClassAttribute;
 public partial class ServiceFunctionAttribute;
+public partial class FromNamedAttribute;
+public partial class FromNewScopeAttribute;
 #else
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)] internal partial class ServiceResolverAttribute;
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)] internal partial class ServiceClassAttribute;
 [System.CodeDom.Compiler.GeneratedCode("tsr-di", null)] internal partial class ServiceFunctionAttribute;
+[System.CodeDom.Compiler.GeneratedCode("tsr-di", null)] internal partial class FromNamedAttribute;
+[System.CodeDom.Compiler.GeneratedCode("tsr-di", null)] internal partial class FromNewScopeAttribute;
 #endif
 #if TSR_DI_ATTRIBUTES_PACKAGE
 public
 #else
  internal 
 #endif
-enum LifeTime
+enum Lifetime
 {
     Singleton,
     Scoped,
@@ -32,24 +36,22 @@ public
 enum SharingMode
 {
     Shared,
-    IsolatePerService,
+    IsolatedPerService,
 }
+
+// for ServiceContainer
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 partial class ServiceResolverAttribute : Attribute;
 
+// for Register Class / Method
+
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 partial class ServiceClassAttribute : Attribute
 {
-    public LifeTime LifeTime { get; set; } = LifeTime.Transient;
+    public Lifetime Lifetime { get; set; } = Lifetime.Transient;
     public SharingMode SharingMode { get; set; } = SharingMode.Shared;
     public string? Name { get; set; } = null;
-}
-
-[AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
-partial class FromNamedAttribute(string Name): Attribute
-{
-    public string Name { get; set; } = Name;
 }
 
 [AttributeUsage(AttributeTargets.Method , AllowMultiple = false)]
@@ -59,5 +61,17 @@ partial class ServiceFunctionAttribute : Attribute
     public string? ServiceName { get; set; } = null;
     public string? Name { get; set; } = null;
 }
+
+
+// for Constructor Parameter
+
+[AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+partial class FromNamedAttribute(string Name): Attribute
+{
+    public string Name { get; set; } = Name;
+}
+
+[AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+partial class FromNewScopeAttribute : Attribute;
 
 #endif

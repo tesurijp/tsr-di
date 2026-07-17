@@ -12,7 +12,7 @@
 
 	<PropertyGroup>
 		<IsPackable>true</IsPackable>
-		<Version>1.0.2</Version>
+		<Version>1.0.3</Version>
 		<Title>tsr-di.Attribute</Title>
 		<Description>T-Service/Symbol-Resolver</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -22,9 +22,11 @@
 		<PackageTags>IoC DI SourceGenerator</PackageTags>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+		<PackageReadmeFile>ReadMe.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Include="$(SolutionDir)ReadMe.md" Pack="true" PackagePath="" />
 		<Compile Include="../tsr-di/template/Attributes.cs" Link="Attributes.cs" />
 	</ItemGroup>
 

@@ -35,7 +35,7 @@ public class NonRegisterdClass
     public static int Func2(int x, int y, int z) => x+y+z;
 
 }
-[ServiceClass(LifeTime=LifeTime.Singleton, Name ="Singleton")]
+[ServiceClass(Lifetime=Lifetime.Singleton, Name ="Singleton")]
 public class RegisterdClassSingleton : IFunctionPlaceHolder
 {
     private string GetClassName() => "SingletonClass";
@@ -66,7 +66,7 @@ public class RegisterdClassSingleton : IFunctionPlaceHolder
     public int Func2(int x, int y, int z) => x+y+z-1;
 
 }
-[ServiceClass(LifeTime=LifeTime.Transient,Name ="Transient")]
+[ServiceClass(Lifetime =Lifetime.Transient,Name ="Transient")]
 public class RegisterdClassTransient : IFunctionPlaceHolder
 {
     private string GetClassName() => "TransientClass";
@@ -96,7 +96,7 @@ public class RegisterdClassTransient : IFunctionPlaceHolder
     [ServiceFunction(ServiceType=typeof(PreDefineIntFunction), Name="Transient")]
     public int Func2(int x, int y, int z) => x+y+z-1;
 }
-[ServiceClass(LifeTime=LifeTime.Scoped, Name ="Scoped")]
+[ServiceClass(Lifetime =Lifetime.Scoped, Name ="Scoped")]
 public class RegisterdClassScoped : IFunctionPlaceHolder
 {
     private string GetClassName() => "ScopedClass";

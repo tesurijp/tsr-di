@@ -80,12 +80,12 @@ public クラスで、public コンストラクタが一つである必要があ
 - `SharingMode`: 共有方法  
   複数のインターフェースを実装する `Singleton`、`Scoped` サービスでの共有方法を調整するための設定です。`Transient` の場合はどちらを指定しも毎回インスタンスを作成します。
   - `Shared` (デフォルト): どのインターフェースで解決される場合でも、共通のインスタンスを返します。
-  - `IsolatePerService`: インターフェースごとに個別のインスタンスを保持します。インターフェースが共通である場合は、共通のインスタンスになります。
+  - `IsolatedPerService`: インターフェースごとに個別のインスタンスを保持します。インターフェースが共通である場合は、共通のインスタンスになります。
 - `Name`: 名前付き解決  
   同じインターフェースに対して複数の実装を登録する場合、この名前で識別します。指定した名前は自動生成される `ServiceKey` enum のメンバーになります。
 
 ```csharp
-[ServiceClass(LifeTime = LifeTime.Singleton, Name = "MainService")]
+[ServiceClass(Lifetime = Lifetime.Singleton, Name = "MainService")]
 public class MyService : IMyService;
 ```
 
@@ -151,7 +151,7 @@ public class Client([FromNamed("MainService")] IMyService service)
 
 - **メソッドによる解決**  
   `[ServiceResolver]` を付与したクラスに自動生成される 2 つの静的メソッド `Resolve<T>()` および `ResolveAll<T>()` を利用してサービスを解決します。  
-  解決の起点となり、`Resolve` 呼び出しから戻るまでの間に行われる解決全体が、`LifeTime.Scoped` の有効期間となります。  
+  解決の起点となり、`Resolve` 呼び出しから戻るまでの間に行われる解決全体が、`Lifetime.Scoped` の有効期間となります。  
   - `Resolve<T>()` は `T` 型のインスタンスを単一で取得します。  
     `Name` パラメータが付与されたサービスを解決する場合は、`Resolve<T>(ServiceKey.MainService)` のように `ServiceKey` で指定します。  
     登録されたサービスが1件だけの場合であっても、名前付きで登録されているときは名前の指定が必要です。
@@ -166,9 +166,9 @@ public class Client([FromNamed("MainService")] IMyService service)
   Resolve<T>() の中も可能な限り省力化していますが、ServiceKey の解決は動作することをコンパイル時にチェックしますが、分岐は実行時に発生します。ダイレクトプロパティ解決では、その判定も行なわれません。  
 
   ```csharp
-  [ServiceClass(LifeTime = LifeTime.Singleton)]
+  [ServiceClass(Lifetime = Lifetime.Singleton)]
   public class MyService1 : IMyService;
-  [ServiceClass(LifeTime = LifeTime.Singleton, Name = "MainService")]
+  [ServiceClass(Lifetime = Lifetime.Singleton, Name = "MainService")]
   public class MyService2 : IMyService;
 
   var svc1= ResolverClass.Services.TestApp.IMyService
@@ -208,7 +208,7 @@ tsr-di は主に以下のファイルを生成します
 
 ### `Attribute.g.cs`
 
-`ServiceResolverAttribute`, `ServiceClassAttribute`, `ServiceFunctionAttribute`, `LifeTime` などの属性定義が含まれます。  
+`ServiceResolverAttribute`, `ServiceClassAttribute`, `ServiceFunctionAttribute`, `Lifetime` などの属性定義が含まれます。  
 複数プロジェクトで利用する場合は、属性クラスの定義を共通化する必要があるため、各プロジェクトから `tsr-di.Attribute` プロジェクト（またはパッケージ）を参照します。  
 その場合、生成された本ファイル内の属性定義は無効になります。単一プロジェクトで他のプロジェクトのサービスを検索する必要がない場合は、`tsr-di.Attribute` を追加参照することなく、自動生成される本ファイル内の属性をそのまま利用できます。
 
