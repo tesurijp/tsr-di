@@ -1,22 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<OutputType>library</OutputType>
-		<TargetFramework>netstandard2.0</TargetFramework>
-		<RootNamespace>tsr_di</RootNamespace>
-		<ImplicitUsings>disable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<LangVersion>latest</LangVersion>
-		<IsRoslynComponent>true</IsRoslynComponent>
-		<AnalyzerLanguage>cs</AnalyzerLanguage>
-		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-		<GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
-		<DefineConstants>$(DefineConstants);TSR_DI_NEED_INTERNAL_ATTRIBUTE</DefineConstants>
-	</PropertyGroup>
-	
-      <PropertyGroup>
-       <IsPackable>true</IsPackable>
-        <Version>1.0.5</Version>
+    <PropertyGroup>
+        <OutputType>library</OutputType>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <RootNamespace>tsr_di</RootNamespace>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <IsRoslynComponent>true</IsRoslynComponent>
+        <AnalyzerLanguage>cs</AnalyzerLanguage>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+        <DefineConstants>$(DefineConstants);TSR_DI_NEED_INTERNAL_ATTRIBUTE</DefineConstants>
+    </PropertyGroup>
+    
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+        <Version>1.0.6</Version>
         <Title>tsr-di</Title>
         <Description>T-Service/Symbol-Resolver</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -25,28 +25,28 @@
         <Authors>tesuri</Authors>
         <PackageTags>IoC DI SourceGenerator</PackageTags>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<PackageReadmeFile>ReadMe.md</PackageReadmeFile>
-      </PropertyGroup>
+        <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <ItemGroup>
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
         <Content Include="build\tsr-di.targets" Pack="True" PackagePath="build" />
-		<None Include="$(SolutionDir)ReadMe.md" Pack="true" PackagePath="" />
-	</ItemGroup>
+        <None Include="$(SolutionDir)ReadMe.md" Pack="true" PackagePath="" />
+    </ItemGroup>
 
-	<Target Name="GetDependencyTargetPaths" AfterTargets="ResolvePackageDependenciesForBuild">
-		<ItemGroup>
-			<TargetPathWithTargetPlatformMoniker Include="@(ResolvedCompileFileDefinitions)" IncludeRuntimeDependency="false" />
-		</ItemGroup>
-	</Target>
+    <Target Name="GetDependencyTargetPaths" AfterTargets="ResolvePackageDependenciesForBuild">
+        <ItemGroup>
+            <TargetPathWithTargetPlatformMoniker Include="@(ResolvedCompileFileDefinitions)" IncludeRuntimeDependency="false" />
+        </ItemGroup>
+    </Target>
 
-	<ItemGroup>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" Version="5.*" />
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" Version="5.*" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<Compile Remove="template/*" />
-		<EmbeddedResource Include="template/*" /> 
-		<Compile Include="template/Attributes.cs" Link="Attributes.cs" />
-	</ItemGroup>
+    <ItemGroup>
+        <Compile Remove="template/*" />
+        <EmbeddedResource Include="template/*" /> 
+        <Compile Include="template/Attributes.cs" Link="Attributes.cs" />
+    </ItemGroup>
 </Project>

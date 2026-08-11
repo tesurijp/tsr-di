@@ -124,13 +124,12 @@ internal static class FieldStoreMapper
 
             foreach (var param in constructor.Parameters)
             {
-                var (type, isCollection, isLazy) = param.Type switch
+                var (type, isCollection) = param.Type switch
                 {
-                    IArrayTypeSymbol array => (array.ElementType as INamedTypeSymbol, true, false),
-                    INamedTypeSymbol named when SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, sset.IEnumerable) => (named.TypeArguments.FirstOrDefault() as INamedTypeSymbol, true, false),
-                    INamedTypeSymbol named when SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, sset.List) => (named.TypeArguments.FirstOrDefault() as INamedTypeSymbol, true, false),
-                    INamedTypeSymbol named when SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, sset.Lazy) => (named.TypeArguments.FirstOrDefault() as INamedTypeSymbol, false, true),
-                    _ => (param.Type as INamedTypeSymbol, false, false)
+                    IArrayTypeSymbol array => (array.ElementType as INamedTypeSymbol, true),
+                    INamedTypeSymbol named when SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, sset.IEnumerable) => (named.TypeArguments.FirstOrDefault() as INamedTypeSymbol, true),
+                    INamedTypeSymbol named when SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, sset.List) => (named.TypeArguments.FirstOrDefault() as INamedTypeSymbol, true),
+                    _ => (param.Type as INamedTypeSymbol, false)
                 };
                 if (type is null)
                 {
@@ -167,14 +166,7 @@ internal static class FieldStoreMapper
 
                     if (matches.Length == 1)
                     {
-                        if (isLazy)
-                        {
-                            yield return $"new (() => {scope}{matches[0].FieldName})";
-                        }
-                        else
-                        {
-                            yield return $"{scope}{matches[0].FieldName}";
-                        }
+                        yield return $"{scope}{matches[0].FieldName}";
                     }
                     else
                     {
