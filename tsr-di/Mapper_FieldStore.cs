@@ -26,7 +26,9 @@ internal static class FieldStoreMapper
             {
                 yield return new ErrorItem(DiagnosticDescriptors.ServiceClassMustBePublic, item);
             }
-            if(! item.AllInterfaces.Where(i => i.DeclaredAccessibility == Accessibility.Public).Any())
+            var providesInstanceFunction = mitems.Any(method =>
+                !method.IsStatic && SymbolEqualityComparer.Default.Equals(method.ContainingType, item));
+            if (!item.AllInterfaces.Any(i => i.DeclaredAccessibility == Accessibility.Public) && !providesInstanceFunction)
             {
                 yield return new ErrorItem(DiagnosticDescriptors.NeedPublicInterface, item);
             }

@@ -1,7 +1,5 @@
 ﻿namespace tsr_di.test;
 
-public interface IFunctionPlaceHolder;
-
 public delegate void PreDefineVoidFunction(int x, int y, int z);
 public delegate int PreDefineIntFunction(int x,int y, int z);
 
@@ -36,7 +34,7 @@ public class NonRegisterdClass
 
 }
 [ServiceClass(Lifetime=Lifetime.Singleton, Name ="Singleton")]
-public class RegisterdClassSingleton : IFunctionPlaceHolder
+public class RegisterdClassSingleton 
 {
     private string GetClassName() => "SingletonClass";
 
@@ -67,7 +65,7 @@ public class RegisterdClassSingleton : IFunctionPlaceHolder
 
 }
 [ServiceClass(Lifetime =Lifetime.Transient,Name ="Transient")]
-public class RegisterdClassTransient : IFunctionPlaceHolder
+public class RegisterdClassTransient
 {
     private string GetClassName() => "TransientClass";
 
@@ -97,7 +95,7 @@ public class RegisterdClassTransient : IFunctionPlaceHolder
     public int Func2(int x, int y, int z) => x+y+z-1;
 }
 [ServiceClass(Lifetime =Lifetime.Scoped, Name ="Scoped")]
-public class RegisterdClassScoped : IFunctionPlaceHolder
+public class RegisterdClassScoped
 {
     private string GetClassName() => "ScopedClass";
 

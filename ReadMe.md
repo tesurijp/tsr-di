@@ -69,6 +69,9 @@ var (func1, func2) = AppResolver.Resolve<IFunc1,IFrunc2>()
 
 サービスとして登録するクラスに付与します。  
 クラスが実装しているすべてのインターフェースがサービス解決の対象となります。  
+クラスをサービス解決の対象とする場合は、1つ以上のインターフェース定義が必須です。  
+ただし、インスタンスメソッドに `[ServiceFunction]` を付与しているクラスは、公開インターフェースを実装していなくても登録できます。  
+この場合、クラス自体はサービス解決の対象にならず、インスタンスはメソッドを delegate として提供するためのライフタイム管理にのみ使用されます。  
 public クラスで、public コンストラクタが一つである必要があります。複数存在する場合や、public でない場合はエラーとなります。
 
 以下のパラメータで登録内容をカスタマイズできます。
@@ -96,7 +99,8 @@ public class MyService : IMyService;
 サービスとして登録するメソッドに付与します。  
 登録された関数は delegate として解決対象になります。
 
-静的メソッドはそのまま登録できます。インスタンスメソッドを登録する場合は、所属クラスにも `[ServiceClass]` を付与する必要があります。その場合、所属クラスのインスタンス解決と同じ仕組みでメソッドの delegate が作成されます。
+静的メソッドはそのまま登録できます。インスタンスメソッドを登録する場合は、所属クラスにも `[ServiceClass]` を付与する必要があります。所属クラスは公開インターフェースを実装している必要はありません。`[ServiceClass]` に指定された `Lifetime` に従ってインスタンスが管理され、そのメソッドから delegate が作成されます。
+`[ServiceFunction]` を持つクラスの `SharingMode` は `Shared` である必要があり、`IsolatedPerService` を指定するとエラーになります。
 
 以下のパラメータで登録内容をカスタマイズできます。
 
@@ -333,32 +337,24 @@ public enum ServiceKey
 ```csharp
 
 [ServiceClass]
-public class UserDB : IUserDB
+public class UserDB
 {
     [ServiceFunction(ServiceName="RegisterUser")]
-    User CreateUser(Info xxxx);
+    public User CreateUser(Info info);
+
     [ServiceFunction(ServiceName="UnregisterUser")]
-    void DeleteUser();
+    public void DeleteUser(User user);
 }
 ```
 
-という典型的なオブジェクト指向で作られたクラス設計のライブラリに対して、
-
-```csharp
-var userDB = Service.Resolve<IUserDB>();
-
-var user = userDB.CreateUser(xxxx);
-userDB.DeleteUser(user);
-```
-
-上記のようなオブジェクト指向的にインターフェースを提供するだけでなく、以下のような利用方法が可能になります。
+`UserDB` 自体をサービスとして公開するためのインターフェースを定義せず、次のようにメソッドだけを解決できます。
 
 ```csharp
 var registerUser = Service.Resolve<IRegisterUser>();
 var unregisterUser = Service.Resolve<IUnregisterUser>();
 
-var user = registerUser(xxxx)
-unregisterUser(user)
+var user = registerUser(info);
+unregisterUser(user);
 ```
 
 registerUser や unregisterUser の実態は、UserDBのインスタンスメソッドであるため、UserDBの実装側で従来通りのオブジェクト指向的なクラス設計でリソース管理などを行なうことが可能です。  
