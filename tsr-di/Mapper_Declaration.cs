@@ -18,7 +18,7 @@ internal static class DeclarationMapper
         {
             var (type, name, _) = GetServiceFunctionAttribute(sset.SvcFuncAttr, item);
             var (retType, args) = GetSignature(type?.DelegateInvokeMethod ?? item);
-            var delegatename = type?.Name.ToString() ?? $"I{name ?? item.Name}";
+            var delegatename = DelegateName(type, name, item);
             var delegateItem = new DelegateItem(retType, delegatename, [.. args], type is null);
             if (dupCheck.TryGetValue(delegatename, out var preRegist))
             {

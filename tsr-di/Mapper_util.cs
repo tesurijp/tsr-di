@@ -10,7 +10,7 @@ namespace tsr_di;
 
 internal class MapperUtil
 {
-    internal static string DelegateName(INamedTypeSymbol? tp, string? typename, IMethodSymbol item) => tp?.ToString() ?? $"I{typename ?? item.Name}";
+    internal static string DelegateName(INamedTypeSymbol? tp, string? typename, IMethodSymbol item) => tp?.ToString() ?? typename ?? item.Name + "Func";
     internal static TypeLookup CreateTypeLookup(TypeSymbols items, TypeSymbols regAttr)
     {
 

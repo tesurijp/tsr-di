@@ -61,8 +61,8 @@ Pure.DI ではサービスの「利用箇所」と「実装」を独立して定
 [ServiceResolver]
 public static partial class AppResolver;
 
-var func1 = AppResolver.Resolve<IFunc1>()
-var (func1, func2) = AppResolver.Resolve<IFunc1,IFrunc2>()
+var func1 = AppResolver.Resolve<Func1>()
+var (func1, func2) = AppResolver.Resolve<Func1,Frunc2>()
 ```
 
 #### `[ServiceClass]`
@@ -105,7 +105,7 @@ public class MyService : IMyService;
 以下のパラメータで登録内容をカスタマイズできます。
 
 - `ServiceType`: 解決対象として使う delegate 型を明示します。
-- `ServiceName`: `ServiceType` を指定しない場合に、自動生成される delegate 名の元になる名前を指定します。
+- `ServiceName`: `ServiceType` を指定しない場合に、自動生成される delegate の名称を指定します。
 - `Name`: 名前付き解決用の名前を指定します。指定した名前は `ServiceKey` enum のメンバーになります。
 
 `ServiceType` を指定しない場合は、メソッドのシグネチャから delegate 型が自動生成されます。自動生成された delegate と `ServiceKey` は、リゾルバーと同じ名前空間の `AutoDefined` 名前空間に出力されます。
@@ -119,7 +119,7 @@ public class Commands
 
 using MyApp.AutoDefined;
 
-var execute = AppResolver.Resolve<IExecuteCommand>();
+var execute = AppResolver.Resolve<ExecuteCommand>();
 var length = execute("sample");
 ```
 
@@ -171,11 +171,11 @@ public class Client([FromNamed("MainService")] IMyService service)
   - `Resolve/ResolveAll` は型引数を複数指定可能です。複数指定した場合の戻り値は、指定した順のタプルとなります。
     - `T Resolve<T>()` 、`(IEnumerable<T1>, IEnumerable<T2>)  ResolveAll<T1,T2>()`、`(T1,T2,T3,T4 .... Tn) ResolveAll<T1,T2,T3,T4 ... Tn>()`
 - **ダイレクトプロパティ解決**  
-  Resolve<T>()と同等の機能ですが、tsr-di の特徴を示す解決インタフェースです。  
+  `Resolve<T>()`と同等の機能ですが、tsr-di の特徴を示す解決インタフェースです。  
   `[ServiceResolver]` を付与したクラス内に、public な静的クラス `Services` が作成されます。その内部にインターフェースと同じ名前をもつ読み出し専用プロパティが用意されるので、そのプロパティを参照することで解決されます。  
   `Services`クラス内は、名前空間ごとに階層的な静的クラスが作成されます。Namedが付与されたサービスは、インターフェース名の後ろに _[名前] を持つプロパティとして用意されます。
 
-  Resolve<T>() の中も可能な限り省力化していますが、ServiceKey の解決は動作することをコンパイル時にチェックしますが、分岐は実行時に発生します。ダイレクトプロパティ解決では、その判定も行なわれません。  
+  `Resolve<T>()` の中も可能な限り省力化していますが、ServiceKey の解決は動作することをコンパイル時にチェックしますが、分岐は実行時に発生します。ダイレクトプロパティ解決では、その判定も行なわれません。  
 
   ```csharp
   [ServiceClass(Lifetime = Lifetime.Singleton)]
@@ -249,7 +249,6 @@ private struct ResolveContext {
     internal tsr_di.test.SimpleResolveDefaultNamed SimpleResolveDefaultNamed_038AF0CC33F8BF83 {get =>  new tsr_di.test.SimpleResolveDefaultNamed(); }
 ```
 
-
 ### `InnerResolve.g.cs`
 
 参照されている全ての T 型と対応する`IResolver<T>.Resolve()` および、`IResolver<T>.ResolveAll()` を実装します。  
@@ -264,7 +263,6 @@ private struct ResolveContext {
 各メソッドの先頭で、ローカル変数として `ResolveContext` をインスタンス化し、`InnerResolve` に実装された `IResolver<T>` の各メソッドを呼び出します。  
 (ローカル変数 `ResolveContext` の寿命と DI としてのスコープが一致するため、スコープ管理専用のコードはありませんが、常に `ResolveContext`のインスタンスが作成されるため、そこがネックになる可能性があります。)  
 `Resolve.g.cs` には型依存せず、型引数の数にのみ依存した実装が出力されます。
-
 
 ```csharp
 
@@ -326,7 +324,7 @@ public enum ServiceKey
 `ServiceFunction` のために自動生成される delegate 型が定義されます。  
 また、各delegateに対応する拡張メソッド Bindが定義されます。
 `ServiceFunction.ServiceType` で既存の delegate 型を明示した場合は、その型が解決対象として使われます。  
-`ServiceType` を指定しない場合は、`SeriverName`で指定された名前(`ServiceName` が指定されてない場合は、実装されているメソッド名)を使って、戻り値と引数の型をとる delegate 型が生成されます。
+`ServiceType` を指定しない場合は、`SeriverName`で指定された名前、`ServiceName` が指定されてない場合は、実装されているメソッド名の末尾に `Func`を加えた名前を使って、戻り値と引数の型をとる delegate 型が生成されます。
 
 ## 関数の解決機能について
 
@@ -349,8 +347,8 @@ public class UserDB
 `UserDB` 自体をサービスとして公開するためのインターフェースを定義せず、次のようにメソッドだけを解決できます。
 
 ```csharp
-var registerUser = Service.Resolve<IRegisterUser>();
-var unregisterUser = Service.Resolve<IUnregisterUser>();
+var registerUser = Service.Resolve<RegisterUser>();
+var unregisterUser = Service.Resolve<UnregisterUser>();
 
 var user = registerUser(info);
 unregisterUser(user);

@@ -16,7 +16,7 @@
     
     <PropertyGroup>
         <IsPackable>true</IsPackable>
-        <Version>1.0.6</Version>
+        <Version>1.1.0</Version>
         <Title>tsr-di</Title>
         <Description>T-Service/Symbol-Resolver</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -46,7 +46,8 @@
 
     <ItemGroup>
         <Compile Remove="template/*" />
-        <EmbeddedResource Include="template/*" /> 
+        <EmbeddedResource Include="template/*" />
+        <None Remove="bin\Debug\netstandard2.0\\tsr-di.dll" /> 
         <Compile Include="template/Attributes.cs" Link="Attributes.cs" />
     </ItemGroup>
 </Project>
