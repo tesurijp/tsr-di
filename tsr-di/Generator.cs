@@ -18,10 +18,10 @@ static file class IncrementalValueProviderExtensions
 [Generator(LanguageNames.CSharp)]
 public class Generator : IIncrementalGenerator
 {
-    private static void CompilationCheck(IncrementalGeneratorInitializationContext context)
+    private static void CompilationCheck(IncrementalGeneratorInitializationContext context, IncrementalValueProvider<bool> isEnabled)
     {
         var verCheck = context.CompilationProvider.Select((c, _) => (c is CSharpCompilation { LanguageVersion: >= LanguageVersion.CSharp14 }) ? null : new ErrorItem(DiagnosticDescriptors.CsVersionError, "", Location.None));
-        context.RegisterSourceOutput(verCheck, (ctx, err) =>
+        context.RegisterSourceOutputWhenEnabled(verCheck, isEnabled, (ctx, err) =>
         {
             if (err != null)
             {
@@ -33,10 +33,12 @@ public class Generator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        var isEnabled = DirectPackageReferenceGate.IsEnabled(context, "TSR_DI_GENERATOR_ENABLED");
+
         // PreOutput
         Emitter.WriteAttribute(context);
 
-        CompilationCheck(context);
+        CompilationCheck(context, isEnabled);
 
         // Collect info
         var constSymbol = Collector.ConstSymbols(context);
@@ -67,17 +69,17 @@ public class Generator : IIncrementalGenerator
         var fieldsItemsAll = fieldsItems.Append(funcfieldsItems);
 
         // Post output
-        context.RegisterSourceOutput(svcResolverItem.Combine(fieldsItemsAll), Emitter.WriteFieldItems);
-        context.RegisterSourceOutput(svcResolverItem.Combine(delegateItem), Emitter.WriteDelegates);
-        context.RegisterSourceOutput(svcResolverItem.Combine(typeArgsCount), Emitter.WriteResolveFunc);
-        context.RegisterSourceOutput(svcResolverItem.Combine(resolveItem), Emitter.WriteTypedEnum);
-        context.RegisterSourceOutput(svcResolverItem.Combine(resolveItem), Emitter.WriteInnerResolve);
-        context.RegisterSourceOutput(svcResolverItem.Combine(resolvPropList), Emitter.WriteResolverProp);
-        context.RegisterSourceOutput(fieldErrors, Emitter.OutputErrors);
-        context.RegisterSourceOutput(funcfieldErrors, Emitter.OutputErrors);
-        context.RegisterSourceOutput(resolveErrors, Emitter.OutputErrors);
-        context.RegisterSourceOutput(svcResolverErrors, Emitter.OutputErrors);
-        context.RegisterSourceOutput(svcDelegateErrors, Emitter.OutputErrors);
+        context.RegisterSourceOutputWhenEnabled(svcResolverItem.Combine(fieldsItemsAll), isEnabled, Emitter.WriteFieldItems);
+        context.RegisterSourceOutputWhenEnabled(svcResolverItem.Combine(delegateItem), isEnabled, Emitter.WriteDelegates);
+        context.RegisterSourceOutputWhenEnabled(svcResolverItem.Combine(typeArgsCount), isEnabled, Emitter.WriteResolveFunc);
+        context.RegisterSourceOutputWhenEnabled(svcResolverItem.Combine(resolveItem), isEnabled, Emitter.WriteTypedEnum);
+        context.RegisterSourceOutputWhenEnabled(svcResolverItem.Combine(resolveItem), isEnabled, Emitter.WriteInnerResolve);
+        context.RegisterSourceOutputWhenEnabled(svcResolverItem.Combine(resolvPropList), isEnabled, Emitter.WriteResolverProp);
+        context.RegisterSourceOutputWhenEnabled(fieldErrors, isEnabled, Emitter.OutputErrors);
+        context.RegisterSourceOutputWhenEnabled(funcfieldErrors, isEnabled, Emitter.OutputErrors);
+        context.RegisterSourceOutputWhenEnabled(resolveErrors, isEnabled, Emitter.OutputErrors);
+        context.RegisterSourceOutputWhenEnabled(svcResolverErrors, isEnabled, Emitter.OutputErrors);
+        context.RegisterSourceOutputWhenEnabled(svcDelegateErrors, isEnabled, Emitter.OutputErrors);
     }
 }
 

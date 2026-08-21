@@ -1,7 +1,11 @@
 <Project>
     <PropertyGroup>
+        <TSR_DI_GENERATOR_ENABLED>true</TSR_DI_GENERATOR_ENABLED>
         <PrepareForBuildDependsOn>$(PrepareForBuildDependsOn);_TSR_DI_AttributeCheck</PrepareForBuildDependsOn>
     </PropertyGroup>
+    <ItemGroup>
+        <CompilerVisibleProperty Include="TSR_DI_GENERATOR_ENABLED" />
+    </ItemGroup>
     <Target Name="_TSR_DI_AttributeCheck" DependsOnTargets="ResolvePackageAssets">
         <PropertyGroup>
             <_TSR_DI_AttributeReferCheck Condition="@(PackageDependencies->WithMetadataValue('Identity', 'tsr-di.Attribute')->Count()) == 0">true</_TSR_DI_AttributeReferCheck>
