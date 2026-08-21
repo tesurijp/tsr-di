@@ -16,7 +16,9 @@
     
     <PropertyGroup>
         <IsPackable>true</IsPackable>
-        <Version>1.1.0</Version>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+        <Version>1.1.1</Version>
         <Title>tsr-di</Title>
         <Description>T-Service/Symbol-Resolver</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
