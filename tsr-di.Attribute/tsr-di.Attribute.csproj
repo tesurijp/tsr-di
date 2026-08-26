@@ -27,6 +27,7 @@
 
 	<ItemGroup>
 		<None Include="$(SolutionDir)ReadMe.md" Pack="true" PackagePath="" />
+		<None Include="$(SolutionDir)docs\*.md" Pack="true" PackagePath="docs" />
 		<Compile Include="../tsr-di/template/Attributes.cs" Link="Attributes.cs" />
 	</ItemGroup>
 

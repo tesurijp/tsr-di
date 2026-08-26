@@ -1,362 +1,78 @@
-# tsr-di (T-Service/Symbol-Resolver) 
+# tsr-di (T-Service/Symbol-Resolver)
 
-tsr-di は、サービスおよびシンボル解決を行なう静的リゾルバーです。  
+tsr-di は、C# の型と関数を属性で宣言し、依存関係をコンパイル時に結び付ける Source Generator です。
 
-一般的な DI コンテナと同様に、インターフェースとその実装クラスを登録し、必要な場所で解決してインスタンスを取得する機能を提供しており、静的 DI としても利用できます。  
-また、クラスだけでなく関数もサービスとして登録し、delegate として解決できます。
+一般的な DI コンテナと同じように、インターフェースから実装を取得し、コンストラクターへ依存関係を注入できます。一方で、実行時の登録表や汎用的な探索処理は持ちません。Source Generator が必要な生成・呼び出しコードを作り、未登録、登録の競合、不正な名前などをビルド時のエラーとして報告します。
 
-以下のような仕組みを提供します。
+クラスだけでなくメソッドを delegate として登録できることも特徴です。オブジェクト指向で実装された機能を、利用側では `CreateUser` のような操作を表す関数として受け取れます。
 
-- クラスや関数を、解決可能なサービスとして属性で登録する。
-- ソースジェネレーターが解決コードを事前に自動生成する。
-- 実行時にはサービス登録や動的な解決ロジックを持たない。
-- コンパイル時にサービス解決の妥当性を検証・保証する。
+## 主な特徴
 
-これらは、動的に解決する一般的な DI というよりも、コンパイル時に依存関係をリンクする「リンカー」に近い発想に基づいています。  
-コンパイル時点で `T` の解決方法は特定されており、解決できないサービスが存在する場合は、実行時例外ではなくコンパイルエラーとなります。
+- 属性によるクラスおよび関数の静的な登録
+- コンパイル時に確定する依存関係
+- `Transient`、`Scoped`、`Singleton` のライフタイム
+- 型安全な `ServiceKey` による名前付き解決
+- コンストラクターへの単一サービスおよびコレクションの注入
+- delegate の自動生成と先頭引数からの部分適用
+- 参照アセンブリに宣言されたサービスの収集
+- 生成された静的プロパティによる直接解決
 
-コンパイル時に依存グラフの構築を完了し、実行時には動的な解決を行わないという点は [Pure.DI](https://github.com/DevTeam/Pure.DI) と同様です。
-Pure.DI ではサービスの「利用箇所」と「実装」を独立して定義したうえで、「依存関係」により両者をつなぐ処理を実装し、あいまいさを解決するのにたいして、tsr-di では「利用箇所」と「実装」を独立し定義したうえで、その依存関係は機械的に確認、あいまいさをエラーとして扱います。
+## 最小例
 
-## 1. 主な特徴
-
-- コンパイル時解決  
-  - すべての依存関係を静的に解決します。
-  - コンパイル時に未登録のサービスが要求されたり、同じインターフェースに対して適用可能な複数の実装が競合して登録されたりしている場合は、コンパイルエラーになります。
-- 属性による登録  
-  - `AddXXX` のようなメソッドによる実行時の登録機能はありません。
-  - `[ServiceClass]` と `[ServiceFunction]` の属性によるコンパイル時の静的な登録のみをサポートします。
-- 関数の解決  
-  - `[ServiceFunction]` を付与したメソッドを delegate として解決対象にできます。
-  - 静的メソッド、または `[ServiceClass]` が付与されたクラスのインスタンスメソッドを登録できます。
-- 型安全な名前付き解決  
-  - `Resolve<T>()` での名前付き解決は、自動生成される `ServiceKey` enum を指定します。
-  - 実行時引数として文字列を直接渡す名前解決は行いません。
-- 複数アセンブリ（プロジェクト）対応  
-  - 自身のプロジェクトだけでなく、参照しているプロジェクトやアセンブリも `ServiceClass` / `ServiceFunction` の検索対象となります。
-- インスタンス共有方法の指定  
-  - 同一のクラスを複数のサービス（インターフェース）に紐づけて登録した際の、インスタンスの共有方法を指定できます。
-- 軽量・高速  
-  - 汎用的な解決ロジックは生成せず、コンパイル時に収集した情報のみに基づく極めてシンプルなコードを出力します。
-  - 単一プロジェクトの場合、実行時に追加される依存アセンブリはありません。
-    - 複数のプロジェクトに分割して利用する場合は、すべてのアセンブリで属性の定義を共通にする必要があります。そのため、属性定義のみを含む共通アセンブリ（`tsr-di.Attribute`）の参照が必要です。
-
-## 利用方法
-
-### 属性と反映結果
-
-#### `[ServiceResolver]`
-
-リゾルバー（DI コンテナに相当するクラス）に付与します。  
-`static partial` クラスとして定義する必要があります。  
-`static T Resolve<T>(ServiceKey key = ServiceKey.None)` および `static IEnumerable<T> ResolveAll<T>()` の 2種類の解決用メソッドが自動生成されます。  
-
-`Resolve<T> `は、一意に定まるクラスか関数を返します。T の実装が複数ある場合は、ServiceKey によって特定する必要があります。
-`ResolveAll<T>` は、T を実装する全てのクラスか関数を返します。ServiceKey は指定しません。
-
-`Resolve/ResolveAll` ともに、型引数は任意の個数が指定可能です。  
-無制限に複数個の実装が生成されるのではなく、 ソースコード上で利用されている個数に合わせた `(T1,T2) Resolve<T1,T2>()` や、`(T1,T2,T3,T4,T5) ResolveAll<T1,T2,T3,T4,T5)()` などが生成されます。
+tsr-di パッケージを直接参照した C# 14 以上のプロジェクトで、リゾルバーとサービスを宣言します。
 
 ```csharp
+using tsr_di;
+
+namespace Sample;
+
+public interface IMessageWriter
+{
+    void Write(string message);
+}
+
+[ServiceClass(Lifetime = Lifetime.Singleton)]
+public sealed class ConsoleMessageWriter : IMessageWriter
+{
+    public void Write(string message) => Console.WriteLine(message);
+}
+
 [ServiceResolver]
-public static partial class AppResolver;
-
-var func1 = AppResolver.Resolve<Func1>()
-var (func1, func2) = AppResolver.Resolve<Func1,Frunc2>()
+public static partial class AppServices;
 ```
-
-#### `[ServiceClass]`
-
-サービスとして登録するクラスに付与します。  
-クラスが実装しているすべてのインターフェースがサービス解決の対象となります。  
-クラスをサービス解決の対象とする場合は、1つ以上のインターフェース定義が必須です。  
-ただし、インスタンスメソッドに `[ServiceFunction]` を付与しているクラスは、公開インターフェースを実装していなくても登録できます。  
-この場合、クラス自体はサービス解決の対象にならず、インスタンスはメソッドを delegate として提供するためのライフタイム管理にのみ使用されます。  
-public クラスで、public コンストラクタが一つである必要があります。複数存在する場合や、public でない場合はエラーとなります。
-
-以下のパラメータで登録内容をカスタマイズできます。
-
-- `LifeTime`: 生存期間（ライフタイム）  
-  - `Transient` (デフォルト): 必要になるたびにインスタンスを作成します。同一の `Resolve` 呼び出しの内部であっても、必要になるたびに作成します。
-  - `Scoped`: 同一の `Resolve` 呼び出しの中で解決されるインスタンスを共有します。
-  - `Singleton`: アプリケーション全体で単一のインスタンスを共有します。
-- `SharingMode`: 共有方法  
-  複数のインターフェースを実装する `Singleton`、`Scoped` サービスでの共有方法を調整するための設定です。`Transient` の場合はどちらを指定しも毎回インスタンスを作成します。
-  - `Shared` (デフォルト): どのインターフェースで解決される場合でも、共通のインスタンスを返します。
-  - `IsolatedPerService`: インターフェースごとに個別のインスタンスを保持します。インターフェースが共通である場合は、共通のインスタンスになります。
-- `Name`: 名前付き解決  
-  同じインターフェースに対して複数の実装を登録する場合、この名前で識別します。指定した名前は自動生成される `ServiceKey` enum のメンバーになります。
 
 ```csharp
-[ServiceClass(Lifetime = Lifetime.Singleton, Name = "MainService")]
-public class MyService : IMyService;
+var writer = AppServices.Resolve<IMessageWriter>();
+writer.Write("Hello");
 ```
 
-名前付き登録に指定する名前は、生成される enum のメンバー名として利用できる C# の識別子にしておく必要があります。名前なしのサービスは `ServiceKey.None` に対応します。
+`Resolve<IMessageWriter>()` の実装と `ConsoleMessageWriter` の生成処理はコンパイル時に作られます。実装が見つからない場合や、名前なしの実装が複数あって一意に決まらない場合、ビルドは tsr-di の診断エラーになります。
 
-#### `[ServiceFunction]`
+## ドキュメント
 
-サービスとして登録するメソッドに付与します。  
-登録された関数は delegate として解決対象になります。
+- [コンセプト](docs/concepts.md) — tsr-di が解決する問題、一般的な DI との違い、関数をサービスにする意図
+- [利用ガイド](docs/getting-started.md) — 導入からクラス、名前付きサービス、スコープ、関数の利用まで
+- [API リファレンス](docs/reference.md) — 属性、生成 API、ライフタイム、制約と診断
+- [実装の概要](docs/implementation.md) — Source Generator の処理とソース構成
 
-静的メソッドはそのまま登録できます。インスタンスメソッドを登録する場合は、所属クラスにも `[ServiceClass]` を付与する必要があります。所属クラスは公開インターフェースを実装している必要はありません。`[ServiceClass]` に指定された `Lifetime` に従ってインスタンスが管理され、そのメソッドから delegate が作成されます。
-`[ServiceFunction]` を持つクラスの `SharingMode` は `Shared` である必要があり、`IsolatedPerService` を指定するとエラーになります。
+## 動作要件とパッケージ
 
-以下のパラメータで登録内容をカスタマイズできます。
+- C# 14 以上
+- `tsr-di`: Source Generator 本体。直接 `PackageReference` したプロジェクトで動作します。
+- `tsr-di.Attribute`: 複数プロジェクトでサービス宣言を共有するときに使う属性定義パッケージです。単一プロジェクトでは通常不要です。
 
-- `ServiceType`: 解決対象として使う delegate 型を明示します。
-- `ServiceName`: `ServiceType` を指定しない場合に、自動生成される delegate の名称を指定します。
-- `Name`: 名前付き解決用の名前を指定します。指定した名前は `ServiceKey` enum のメンバーになります。
+tsr-di は生成時に使用される analyzer パッケージであり、通常の実行時ライブラリとしてアプリケーションへ組み込まれるものではありません。
 
-`ServiceType` を指定しない場合は、メソッドのシグネチャから delegate 型が自動生成されます。自動生成された delegate と `ServiceKey` は、リゾルバーと同じ名前空間の `AutoDefined` 名前空間に出力されます。
+C# 14 は Source Generator が出力するコードをコンパイルするための言語仕様の要件であり、ターゲットフレームワークを同世代の .NET に限定するものではありません。C# 14 を扱える SDK / コンパイラーから、より古い .NET を対象にできます。ただし、利用する言語機能が対象フレームワークにない補助型を要求する場合は、プロジェクト側で互換定義が必要です。たとえば古いターゲットで `record` や `init` を使う場合は、対象フレームワークに存在しないときだけ `System.Runtime.CompilerServices.IsExternalInit` を定義します。
+
+古いターゲット向けの `IsExternalInit` の最小定義例です。この定義は対象フレームワークに同じ型がない場合だけ追加してください。
 
 ```csharp
-public class Commands
-{
-    [ServiceFunction(ServiceName = "ExecuteCommand")]
-    public static int Execute(string value) => value.Length;
-}
+namespace System.Runtime.CompilerServices;
 
-using MyApp.AutoDefined;
-
-var execute = AppResolver.Resolve<ExecuteCommand>();
-var length = execute("sample");
+internal static class IsExternalInit;
 ```
 
-#### `[FromNamed]`
+## ライセンス
 
-コンストラクター引数に付与し、どの名前付きサービスを注入するかを指定します。
-
-`Name` で指定された名前を持つサービスを解決し、コンストラクターの該当引数に注入します。  
-`[FromNamed]` が付与されていない場合は、`Name` パラメータのない（名前なしの）サービスが注入されます。
-
-`Resolve<T>()` では `ServiceKey` enum を使いますが、`[FromNamed]` は文字列で名前を指定します。`ServiceKey` は利用側の実装コード内に自動生成される型であり、ライブラリ側で定義される `[FromNamed]` 属性からは参照できません。  
-また、`Resolve<T>()` の引数は実行時に渡される値であるため、動的な指定の正当性を保護する目的で `ServiceKey` を使います。一方、`[FromNamed]` の文字列はソースジェネレーターがコンパイル時に検証するため、静的に正当性を保証できます。  
-このように、機能構成をシンプルに保ちながら十分な正当性保証を行うため、`Resolve<T>()` と `[FromNamed]` では異なる指定方法を採用しています。
-
-```csharp
-[ServiceClass]
-public class Client([FromNamed("MainService")] IMyService service)
-{
-    // ...
-}
-```
-
-#### `[FromNewScope]`
-
-コンストラクター引数に付与し、その引数から新しいスコープを作成して解決することを指定します。  
-主に`Scoped` のサービスを解決する際に、同一スコープ内で共有されるインスタンスを分離するために使用します。  
-`[FromNewScope]` が付与された引数は、現在のスコープとは別のスコープで解決されるため、同じ `Scoped` サービスでも異なるインスタンスが注入されます。
-
-`[FromNewScope]` が付与されていない引数は、現在のスコープを引き継いで解決されます。
-
-### サービス解決と注入
-
-提供される基本機能は、一般的な DI コンテナと大きな違いはありません。  
-サービスの取得には `Resolve` メソッドを使用し、依存関係はコンストラクターの引数へ注入されます（プロパティ注入などには対応していません）。
-
-大きな特徴として、メソッドによる解決であれコンストラクター引数への注入であれ、解決できないサービスが存在する場合はコンパイルエラーになります。  
-そのため、`T Resolve<T>()` および `IEnumerable<T> ResolveAll<T>()` といった確実に解決できることを前提としたインターフェースのみを提供し、`TryResolve<T>(out T)` や `T? Resolve<T>()` のような実行時に解決結果を確認する必要のあるインターフェースは提供しません。
-
-`Scoped` でインスタンスが共有される範囲は、個別の `Resolve`呼び出しです。  
-インスタンス生成に別のクラスが必要になりコンストラクタを経由する場合だけでなく、`Resolve<T1,T2...Tn>()` のように複数の値を返す呼び出しの場合も `Scoped`の範囲内となります。
-
-- **メソッドによる解決**  
-  `[ServiceResolver]` を付与したクラスに自動生成される 2 つの静的メソッド `Resolve<T>()` および `ResolveAll<T>()` を利用してサービスを解決します。  
-  解決の起点となり、`Resolve` 呼び出しから戻るまでの間に行われる解決全体が、`Lifetime.Scoped` の有効期間となります。  
-  - `Resolve<T>()` は `T` 型のインスタンスを単一で取得します。  
-    `Name` パラメータが付与されたサービスを解決する場合は、`Resolve<T>(ServiceKey.MainService)` のように `ServiceKey` で指定します。  
-    登録されたサービスが1件だけの場合であっても、名前付きで登録されているときは名前の指定が必要です。
-  - `ResolveAll<T>()` は、名前の有無に関係なく `T` 型で登録されたすべてのインスタンスを返します（並び順は保証されません）。
-  - `Resolve/ResolveAll` は型引数を複数指定可能です。複数指定した場合の戻り値は、指定した順のタプルとなります。
-    - `T Resolve<T>()` 、`(IEnumerable<T1>, IEnumerable<T2>)  ResolveAll<T1,T2>()`、`(T1,T2,T3,T4 .... Tn) ResolveAll<T1,T2,T3,T4 ... Tn>()`
-- **ダイレクトプロパティ解決**  
-  `Resolve<T>()`と同等の機能ですが、tsr-di の特徴を示す解決インタフェースです。  
-  `[ServiceResolver]` を付与したクラス内に、public な静的クラス `Services` が作成されます。その内部にインターフェースと同じ名前をもつ読み出し専用プロパティが用意されるので、そのプロパティを参照することで解決されます。  
-  `Services`クラス内は、名前空間ごとに階層的な静的クラスが作成されます。Namedが付与されたサービスは、インターフェース名の後ろに _[名前] を持つプロパティとして用意されます。
-
-  `Resolve<T>()` の中も可能な限り省力化していますが、ServiceKey の解決は動作することをコンパイル時にチェックしますが、分岐は実行時に発生します。ダイレクトプロパティ解決では、その判定も行なわれません。  
-
-  ```csharp
-  [ServiceClass(Lifetime = Lifetime.Singleton)]
-  public class MyService1 : IMyService;
-  [ServiceClass(Lifetime = Lifetime.Singleton, Name = "MainService")]
-  public class MyService2 : IMyService;
-
-  var svc1= ResolverClass.Services.TestApp.IMyService
-  // var svc1= ResolverClass.Resolve<IMyService>(); と同等
-  var svc2= ResolverClass.Services.TestApp.IMyService_MainService
-  // var svc2= ResolverClass.Resolve<IMyService>(ServiceKey.MainService); と同等
-  ```
-
-- **コンストラクター注入**  
-  コンストラクター引数で要求された型に、対応するサービスを注入します。  
-  `Resolve<T>()` などで起点として要求された型から、そのコンストラクター引数で要求されている型を再帰的にたどって依存関係を解決し、必要なインスタンスをコンストラクターへ渡します。  
-  - **通常注入**: 指定された型のサービスをコンストラクター引数へ注入します。`[FromNamed("Xxx")]` 属性が指定された引数には、対応する名前付きサービスを注入します。`[FromNamed]` が指定されていない引数には、名前なしで登録されたサービスを注入します（`Resolve<T>` 相当）。
-  - **コレクション注入**: コンストラクター引数の型として `IEnumerable<T>`、`List<T>`、`T[]` などのコレクションを指定した場合は、その型で登録されたすべてのサービスをまとめて注入します（`ResolveAll<T>()` 相当）。
-- **関数の解決と部分適用**  
-  `[ServiceFunction]` を付与したメソッドは delegate として解決できます。  
-  `ServiceType` を指定した場合はその型で解決され、指定しない場合は自動生成された delegate 型で解決されます。  
-  また、サービス対象となった delegate に対しては、引数を部分適用するための拡張メソッド `Bind` が生成されます。これにより、解決した関数へ関数を部分適用した新しいデリゲート（`Action` または `Func`）を取得できます。
-
-  例えば、引数を3つ取る `delegate void IXYA(int X, int y, int A)` というデリゲートが自動生成された場合、以下のように部分適用を行うことができます。
-
-  ```csharp
-  // 引数を3つ取るデリゲートを解決
-  var xya = ResolverClass.Resolve<IXYA>();
-  xya(1, 2, 3); // 通常の呼び出し
-
-  // 第1引数を固定（部分適用）し、残りの引数2つを受け取るデリゲート（Action<int, int>）を取得
-  var ya = xya.Bind(1);
-  ya(2, 3); // 内部で xya(1, 2, 3) が呼び出されます
-  ```
-
-  `Bind` メソッドは、第1引数から第k引数までを固定するために、引数の個数に応じたオーバーロードが自動的に生成されます。すべての引数をバインドした場合は、引数なしの `Action` または `Func<TReturn>` が返されます。
-
-## 生成されるコードについて
-
-tsr-di は主に以下のファイルを生成します
-
-### `Attribute.g.cs`
-
-`ServiceResolverAttribute`, `ServiceClassAttribute`, `ServiceFunctionAttribute`, `Lifetime` などの属性定義が含まれます。  
-複数プロジェクトで利用する場合は、属性クラスの定義を共通化する必要があるため、各プロジェクトから `tsr-di.Attribute` プロジェクト（またはパッケージ）を参照します。  
-その場合、生成された本ファイル内の属性定義は無効になります。単一プロジェクトで他のプロジェクトのサービスを検索する必要がない場合は、`tsr-di.Attribute` を追加参照することなく、自動生成される本ファイル内の属性をそのまま利用できます。
-
-### `InnerResolveContext.g.cs`
-
-`ResolveContext` 構造体が定義され、その中に登録されたクラスサービスや関数 delegate を管理するプロパティが作成されます。  
-ライフタイムの違いはプロパティの内部実装で吸収されるため、利用側はライフタイムの違いを意識する必要がありません。  
-`ResolveContext` は `Resolve<T>()` / `ResolveAll<T>()` のメソッド内ローカル変数であるため、ローカル変数のスコープと DI のスコープが一致します。  
-
-- `Singleton`: `static readonly object` フィールドに実体が保持され、アプリケーション全体で共有されます。
-- `Scoped`: インスタンスプロパティの `field` に保持され、同一スコープ内で再度参照された場合は同じインスタンスが再利用されます。
-- `Transient`: 保持されず、毎回 `new()` するコードになります。
-
-また `SharingMode` の指定内容によって、インスタンスを保持するプロパティがサービスごとに分割されるか、あるいは共通化されるかが変わります。
-
-```csharp
-private struct ResolveContext {
-    // Transient
-    internal tsr_di.test.SimpleResolveDefault SimpleResolveDefault_41A027181B0F898B {get =>  new tsr_di.test.SimpleResolveDefault(); }
-
-    // Singleton
-    private static tsr_di.test.SimpleResolveSingleton? _SimpleResolveSingleton_1A12D1D0BCCE9EF5;
-    private static Lock _lock_SimpleResolveSingleton_1A12D1D0BCCE9EF5 = new();
-    internal tsr_di.test.SimpleResolveSingleton SimpleResolveSingleton_1A12D1D0BCCE9EF5 {get { lock(_lock_SimpleResolveSingleton_1A12D1D0BCCE9EF5) { return _SimpleResolveSingleton_1A12D1D0BCCE9EF5 ??=  new tsr_di.test.SimpleResolveSingleton(); } } }
-
-    // Scoped
-    internal tsr_di.test.SimpleResolveDefaultNamed SimpleResolveDefaultNamed_038AF0CC33F8BF83 {get =>  new tsr_di.test.SimpleResolveDefaultNamed(); }
-```
-
-### `InnerResolve.g.cs`
-
-参照されている全ての T 型と対応する`IResolver<T>.Resolve()` および、`IResolver<T>.ResolveAll()` を実装します。  
-引数として `ResolveContext` をインスタンスを受けとり、ServiceKeyの switchで `ResolveContext` のどのフィールドを指定するか選択します。  
-
-実装される型はコード上で `Resolve<T>()` や `ResolveAll<T>()` の型引数として使用されている型 `T` のみに限定しており、登録しても`Resolve`の型引数として 利用していないインターフェースの判定処理は出力されません。
-このため `[ServiceClass]` や `[ServiceFunction]` 属性を付与していても実際にはコード上で解決要求のないサービスは、インターフェースへの参照が到達されることのないクラスや関数となり、Native AOT 等によるトリムの対象になりやすくなります。  
-
-### `Resolve.g.cs`
-
-`Resolve<T>` および `ResolveAll<T>` 、`Resolve<T1,T2...>()` などを実装します。  
-各メソッドの先頭で、ローカル変数として `ResolveContext` をインスタンス化し、`InnerResolve` に実装された `IResolver<T>` の各メソッドを呼び出します。  
-(ローカル変数 `ResolveContext` の寿命と DI としてのスコープが一致するため、スコープ管理専用のコードはありませんが、常に `ResolveContext`のインスタンスが作成されるため、そこがネックになる可能性があります。)  
-`Resolve.g.cs` には型依存せず、型引数の数にのみ依存した実装が出力されます。
-
-```csharp
-
-public static T Resolve<T>(ServiceKey  key= ServiceKey.None) {
-    var localStore = new ResolveContext();
-    return ((IResolver<T>)inner).Resolve(localStore , key);
-}
-
-public static (T1,T2) Resolve<T1,T2>(ServiceKey key1 = ServiceKey.None,ServiceKey key2 = ServiceKey.None) {
-    var localStore = new ResolveContext();
-    var res1 = ((IResolver<T1>)inner).Resolve(localStore, key1);
-    var res2 = ((IResolver<T2>)inner).Resolve(localStore, key2);
-    return (res1,res2);
-}
-
-public static (T1,T2,T3,T4) Resolve<T1,T2,T3,T4>(ServiceKey key1 = ServiceKey.None,ServiceKey key2 = ServiceKey.None,ServiceKey key3 = ServiceKey.None,ServiceKey key4 = ServiceKey.None) {
-    var localStore = new ResolveContext();
-    var res1 = ((IResolver<T1>)inner).Resolve(localStore, key1);
-    var res2 = ((IResolver<T2>)inner).Resolve(localStore, key2);
-    var res3 = ((IResolver<T3>)inner).Resolve(localStore, key3);
-    var res4 = ((IResolver<T4>)inner).Resolve(localStore, key4);
-    return (res1,res2,res3,res4);
-}
-```
-
-### `ResolveProp.g.cs`
-
-ダイレクトプロパティ解決用の Serviceクラスが実装されます。  
-
-```csharp
-public static class Services {
-    public static partial class tsr_di { public static partial class test { 
-        public static global::tsr_di.test.ISimpleResolveDefault ISimpleResolveDefault =>new ResolveContext().SimpleResolveDefault_41A027181B0F898B;
-    }}
-    public static partial class tsr_di { public static partial class test { 
-        public static global::tsr_di.test.ISimpleResolveDefault ISimpleResolveDefault_Def =>new ResolveContext().SimpleResolveDefaultNamed_038AF0CC33F8BF83;
-    }}
-    ...
-}
-```
-
-### `TypedEnum.g.cs`
-
-名前付き登録に利用する `ServiceKey` enum が定義されます。  
-名前なしのサービスを表す `None` と、`ServiceClass.Name` / `ServiceFunction.Name` で指定された名前に対応する enum メンバーが生成されます。
-
-```csharp
-namespace MyApp.AutoDefined;
-
-public enum ServiceKey
-{
-    None,
-    MainService,
-}
-```
-
-### `Delegates.g.cs`
-
-`ServiceFunction` のために自動生成される delegate 型が定義されます。  
-また、各delegateに対応する拡張メソッド Bindが定義されます。
-`ServiceFunction.ServiceType` で既存の delegate 型を明示した場合は、その型が解決対象として使われます。  
-`ServiceType` を指定しない場合は、`SeriverName`で指定された名前、`ServiceName` が指定されてない場合は、実装されているメソッド名の末尾に `Func`を加えた名前を使って、戻り値と引数の型をとる delegate 型が生成されます。
-
-## 関数の解決機能について
-
-関数、メソッドを解決する機能は、一般的なDIコンテナとしては少し特殊な機能です。  
-機能そのものは、解決する対象がクラスのインスタンスではなく、メソッドになるというだけですが、この機能によってオブジェクト指向的な発想で作られたライブラリをDDD的なドメインレベルの要求の解決の対象とすることが出来ます。
-
-```csharp
-
-[ServiceClass]
-public class UserDB
-{
-    [ServiceFunction(ServiceName="RegisterUser")]
-    public User CreateUser(Info info);
-
-    [ServiceFunction(ServiceName="UnregisterUser")]
-    public void DeleteUser(User user);
-}
-```
-
-`UserDB` 自体をサービスとして公開するためのインターフェースを定義せず、次のようにメソッドだけを解決できます。
-
-```csharp
-var registerUser = Service.Resolve<RegisterUser>();
-var unregisterUser = Service.Resolve<UnregisterUser>();
-
-var user = registerUser(info);
-unregisterUser(user);
-```
-
-registerUser や unregisterUser の実態は、UserDBのインスタンスメソッドであるため、UserDBの実装側で従来通りのオブジェクト指向的なクラス設計でリソース管理などを行なうことが可能です。  
-ビジネスロジック部分からはドメイン要求を解決する手段のみが見えている状態で、その実現をしているオブジェクトの存在を意識する必要はありません。Repository.Save()のような妥協も持ち込む必要がなくなります。
-
-## 今後の拡張予定
-
-今後の拡張として、データテーブル、定数値など、多様なリソースや情報の静的解決手段となる機能を追加していく予定です。
+[MIT License](LICENSE.txt)

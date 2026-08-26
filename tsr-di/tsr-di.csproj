@@ -34,6 +34,7 @@
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
         <Content Include="build\tsr-di.targets" Pack="True" PackagePath="build" />
         <None Include="$(SolutionDir)ReadMe.md" Pack="true" PackagePath="" />
+        <None Include="$(SolutionDir)docs\*.md" Pack="true" PackagePath="docs" />
     </ItemGroup>
 
     <Target Name="GetDependencyTargetPaths" AfterTargets="ResolvePackageDependenciesForBuild">
