@@ -26,9 +26,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="$(SolutionDir)ReadMe.md" Pack="true" PackagePath="" />
-		<None Include="$(SolutionDir)docs\*.md" Pack="true" PackagePath="docs" />
-		<Compile Include="../tsr-di/template/Attributes.cs" Link="Attributes.cs" />
+		<None Include="$(SolutionDir)ReadMe.md" Pack="true" PackagePath="" Visible="False"/>
+		<None Include="$(SolutionDir)docs\*.md" Pack="true" PackagePath="docs" Visible="False" />
+		<Compile Include="../tsr-di/template/Attributes.cs" Link="Attributes.cs"  />
 	</ItemGroup>
 
 	<Target Name="GetDependencyTargetPaths" AfterTargets="ResolvePackageDependenciesForBuild">

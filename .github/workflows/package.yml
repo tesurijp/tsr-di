@@ -1,0 +1,57 @@
+name: Build NuGet packages
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Remove previous build artifacts
+        shell: pwsh
+        run: |
+          $paths = @(
+            'artifacts',
+            'tsr-di/bin/Release',
+            'tsr-di/obj/Release',
+            'tsr-di.Attribute/bin/Release',
+            'tsr-di.Attribute/obj/Release'
+          )
+
+          foreach ($path in $paths) {
+            if (Test-Path -LiteralPath $path) {
+              Remove-Item -LiteralPath $path -Recurse -Force
+            }
+          }
+
+      - name: Restore dependencies
+        run: dotnet restore tsr-di.slnx
+
+      - name: Build Release packages
+        run: |
+          dotnet build tsr-di/tsr-di.csproj --configuration Release --no-restore -p:SolutionDir="$GITHUB_WORKSPACE/"
+          dotnet build tsr-di.Attribute/tsr-di.Attribute.csproj --configuration Release --no-restore -p:SolutionDir="$GITHUB_WORKSPACE/"
+
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            tsr-di/bin/Release/*.nupkg
+            tsr-di.Attribute/bin/Release/*.nupkg
+          if-no-files-found: error
+          retention-days: 7
+          archive: false
