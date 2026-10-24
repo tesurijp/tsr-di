@@ -1,0 +1,68 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="tsr-di: Compile-time dependency resolution for classes and methods. No runtime service registry or lookup. クラスもメソッドもコンパイル時に解決。実行時の登録・探索は不要。"><title>tsr-di | 依存解決は、コンパイル時に。</title><link rel="stylesheet" href="styles.css"><script src="script.js" defer></script></head><body><a class="skip" href="#main">Skip to content</a><header><a class="brand" href="#">tsr<span>-di</span><i> / </i><small>STATIC RESOLVER</small></a><nav><a href="#concept" class="" data-i18n="nav1">コンセプト</a><a href="#examples" class="" data-i18n="nav2">使い方</a><a href="https://github.com/tesurijp/tsr-di">GitHub ↗</a></nav><div class="languages" aria-label="Language"><button data-lang="ja" aria-pressed="true">日本語</button><button data-lang="en" aria-pressed="false">EN</button></div></header><main id="main"><section class="hero"><div><p class="eyebrow"><span class="dot"></span> C# SOURCE GENERATOR</p><h1 class="" data-i18n="h">依存解決は、
+コンパイル時に。</h1><p class="lead" data-i18n="lead">実行時に登録表を探索する DI から、生成コードで直接呼び出す DI へ。
+クラスだけでなく、メソッドも型安全なサービスとして解決します。</p><div class="actions"><a class="button" href="#start"><span class="" data-i18n="start">使い始める</span> <span>↗</span></a><a class="textlink" href="https://www.nuget.org/packages/tsr-di">NuGet ↗</a></div><div class="tags"><span>C# 14+</span><span>COMPILE-TIME DI</span><span>MIT LICENSE</span></div></div><div class="hero-code"><div class="code"><div class="codebar"><span>C# / RESOLVE</span><button class="copy" type="button" data-i18n="copy">コピー</button></div><pre><code>using tsr_di;
+
+[ServiceResolver]
+public static partial class AppServices;
+
+// Resolve at the point of use.
+var writer = AppServices
+    .Resolve&lt;IMessageWriter&gt;();
+
+writer.Write(&quot;Hello, tsr-di.&quot;);</code></pre></div><div class="build-note"><span>✓</span> <span class="" data-i18n="note">実行時のサービス登録・探索処理は不要。</span></div></div></section><section id="concept" class="concept"><div class="section-label">01 / THE IDEA</div><div><h2 class="" data-i18n="ct">依存解決を、実行時に持ち込まない。</h2><p class="" data-i18n="cp">実行時に登録表を構築・探索する一般的な DI コンテナに対し、tsr-di は Source Generator がコンパイル時に依存関係を確定します。実行時は生成されたコードがコンストラクターやメソッドを直接呼び出すため、登録表の構築・探索やリフレクションによる依存解決の負荷がありません。未登録や登録の競合も、ビルド時に検出します。</p><div class="pipeline"><div><b>01</b><span class="" data-i18n="declare">属性で宣言</span><code>[ServiceClass]</code></div><span>→</span><div><b>02</b><span class="" data-i18n="generate">ビルドで生成</span><code>Source Generator</code></div><span>→</span><div><b>03</b><span class="" data-i18n="resolve">型で解決</span><code>Resolve&lt;T&gt;()</code></div></div></div></section><section id="examples"><div class="section-head"><div><p class="section-label">02 / IN PRACTICE</p><h2 class="" data-i18n="et">クラスも、メソッドも、解決対象に。</h2></div><p class="" data-i18n="ep">オブジェクトだけでなく、必要な操作そのものを依存関係として宣言できます。</p></div><div class="examples"><article><h3 class="" data-i18n="cct">クラスを、生成コードで直接解決</h3><p class="" data-i18n="ccp">属性で実装とライフタイムを宣言。コンストラクターへの依存注入までコンパイル時に結び付けるため、実行時のサービス探索は不要です。</p><div class="code"><div class="codebar"><span>01 / DECLARE</span><button class="copy" type="button" data-i18n="copy">コピー</button></div><pre><code>using tsr_di;
+
+namespace Sample;
+
+public interface IMessageWriter
+{
+    void Write(string message);
+}
+
+[ServiceClass(Lifetime = Lifetime.Singleton)]
+public sealed class ConsoleMessageWriter : IMessageWriter
+{
+    public void Write(string message)
+        =&gt; Console.WriteLine(message);
+}
+
+[ServiceResolver]
+public static partial class AppServices;</code></pre></div></article><article><h3 class="" data-i18n="fct">メソッドも、型安全に解決</h3><p class="" data-i18n="fcp">メソッドに属性を付けるだけで、専用の delegate 型を自動生成。Resolve&lt;T&gt;() で操作そのものを取得でき、利用側に実装クラスや専用インターフェースを公開する必要はありません。</p><div class="code"><div class="codebar"><span>02 / FUNCTION SERVICE</span><button class="copy" type="button" data-i18n="copy">コピー</button></div><pre><code>public static class TextOperations
+{
+    [ServiceFunction(ServiceName = &quot;NormalizeText&quot;)]
+    public static string Normalize(string value)
+        =&gt; value.Trim();
+}
+
+// In a project with AppServices declared:
+// using Sample.AutoDefined;
+NormalizeText normalize =
+    AppServices.Resolve&lt;NormalizeText&gt;();
+
+var result = normalize(&quot;  Hello  &quot;);</code></pre></div><div class="subnote"><span class="" data-i18n="bind">登録 delegate には、先頭引数を固定する Bind 拡張メソッドも生成されます。</span></div></article></div><article class="fsharp-example"><div><p class="section-label">F# / C# INTEROP</p><h3 class="" data-i18n="fst">F# の関数も、同じ仕組みで。</h3><p class="" data-i18n="fsp">F# のモジュール関数は .NET の static メソッドとして公開されます。ServiceFunction 属性を付ければ、C# 側では生成された delegate を通して、関数そのものをサービスとして解決できます。</p><p class="subnote" data-i18n="fssetup">構成：F# のクラスライブラリから tsr-di.Attribute を参照し、C# アプリからその F# プロジェクトを参照します。C# 側では tsr-di と共通の tsr-di.Attribute を直接参照してください。</p><p class="subnote" data-i18n="fsnote">F# 側の実装をラッパークラスや専用インターフェースで包まず、利用側は NormalizeFromFSharp という操作の契約に依存できます。以下は別々のプロジェクトに置く例です。</p></div><div class="fsharp-code"><div class="code"><div class="codebar"><span>F# / Domain.fs</span><button class="copy" type="button" data-i18n="copy">コピー</button></div><pre><code>namespace Domain
+
+open tsr_di
+
+module TextOperations =
+    [&lt;ServiceFunction(ServiceName = &quot;NormalizeFromFSharp&quot;)&gt;]
+    let normalize (value: string) : string =
+        value.Trim()
+</code></pre></div><div class="code"><div class="codebar"><span>C# / Example.cs</span><button class="copy" type="button" data-i18n="copy">コピー</button></div><pre><code>using tsr_di;
+using Sample.AutoDefined;
+
+namespace Sample;
+
+[ServiceResolver]
+public static partial class AppServices;
+
+public static class Example
+{
+    public static string Run()
+    {
+        NormalizeFromFSharp normalize =
+            AppServices.Resolve&lt;NormalizeFromFSharp&gt;();
+
+        return normalize(&quot;  Hello from F#  &quot;);
+    }
+}</code></pre></div></div></article></section><section class="details"><div><p class="section-label">03 / CONTROL</p><h2 class="" data-i18n="lt">共有する範囲も、明示する。</h2><p class="" data-i18n="lp">Scoped は、1 回の Resolve / ResolveAll 内で共有。複数のルートを一度に解決すれば、同じスコープを利用できます。</p><div class="code"><div class="codebar"><span>SHARED SCOPE</span><button class="copy" type="button" data-i18n="copy">コピー</button></div><pre><code>var (reader, writer) =
+    AppServices.Resolve&lt;IReader, IWriter&gt;();</code></pre></div></div><div class="lifetimes"><div><h3>Transient</h3><p class="" data-i18n="Transient">要求ごとに新しく生成。既定のライフタイム。</p></div><div><h3>Scoped</h3><p class="" data-i18n="Scoped">1 回の解決呼び出し内でインスタンスを共有。</p></div><div><h3>Singleton</h3><p class="" data-i18n="Singleton">リゾルバー全体でインスタンスを共有。</p></div></div></section><section class="more"><article><h3><code>ServiceKey</code></h3><p class="" data-i18n="key">名前付きサービスを生成 enum で指定。登録名の不整合はビルド時に検出します。</p></article><article><h3><code>ResolveAll&lt;T&gt;()</code></h3><p class="" data-i18n="all">複数の登録をまとめて解決。コンストラクターへのコレクション注入も利用できます。</p></article><article><h3><code>Services</code></h3><p class="" data-i18n="props">生成された静的プロパティから直接解決。名前空間に沿った階層をたどれます。</p></article></section><section id="start" class="getstarted"><div><p class="section-label">04 / GET STARTED</p><h2 class="" data-i18n="st">実行時の探索をなくす、
+静的 DI を。</h2><p class="" data-i18n="sp">C# 14 以上のコンパイラーを使用し、リゾルバーを生成するプロジェクトから直接参照します。</p></div><div><div class="code"><div class="codebar"><span>TERMINAL</span><button class="copy" type="button" data-i18n="copy">コピー</button></div><pre><code>dotnet add package tsr-di</code></pre></div><p class="small" data-i18n="attr">サービス宣言を複数プロジェクトで共有する場合は、tsr-di.Attribute を利用します。C# の要件は、ターゲット .NET の世代を限定するものではありません。</p></div></section><section class="resources"><a href="https://github.com/tesurijp/tsr-di/blob/master/docs/getting-started.md"><span class="" data-i18n="guide">利用ガイド</span><span>↗</span></a><a href="https://github.com/tesurijp/tsr-di/blob/master/docs/concepts.md"><span class="" data-i18n="conceptlink">コンセプト</span><span>↗</span></a><a href="https://github.com/tesurijp/tsr-di/blob/master/docs/reference.md"><span class="" data-i18n="api">API リファレンス</span><span>↗</span></a></section><aside class="scope-note"><span class="" data-i18n="scope">設計方針：ビルド時に依存関係が決まるアプリケーション向け。実行中の登録変更・動的な文字列解決・TryResolve・プロパティ注入は提供しません。詳細と制約は公式ドキュメントをご確認ください。</span></aside></main><footer><a class="brand" href="#">tsr<span>-di</span></a><span>T-Service / Symbol-Resolver</span><div><a href="https://github.com/tesurijp/tsr-di">GitHub ↗</a><a href="https://www.nuget.org/packages/tsr-di">NuGet ↗</a><a href="https://github.com/tesurijp/tsr-di/blob/master/LICENSE.txt">MIT License ↗</a></div></footer></body></html>
