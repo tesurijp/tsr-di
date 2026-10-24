@@ -12,11 +12,11 @@
 
 	<PropertyGroup>
 		<IsPackable>true</IsPackable>
-		<Version>1.0.3</Version>
+		<Version>1.0.4</Version>
 		<Title>tsr-di.Attribute</Title>
 		<Description>T-Service/Symbol-Resolver</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageProjectUrl>https://github.com/tesurijp/tsr-di</PackageProjectUrl>
+		<PackageProjectUrl>https://wiki.tesuri.org/tsr-di/</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/tesurijp/tsr-di</RepositoryUrl>
 		<Authors>tesuri</Authors>
 		<PackageTags>IoC DI SourceGenerator</PackageTags>
